@@ -13,7 +13,11 @@ The implemenation is heavily influenced by Kris Kowal's [Q](https://github.com/k
 
 ### How do I get set up? ###
 
-* Download the latest JAR [here](http://TODO) or use Gradle to include the library in your project.
+#### Getting the library ####
+
+##### JAR 
+
+[jq.jar](http://TODO)
 
 ##### Gradle
 ```groovy
@@ -22,7 +26,13 @@ dependencies {
 }
 ````
 
-* The library expects a Config object to be passed at startup. The Config object serves as an integration layer to enable using the library in custom environments. It supports Android's event model by default, but may be tailored to your needs. The library itself has no dependencies except for standard Java7.
+#### Configuration
+
+The library expects a Config object to be passed at startup. The Config object serves as an integration layer to enable using the library in custom environments. It supports Android's event model by default, but may be tailored to your needs. The library itself has no dependencies except for standard Java7. For Android, a default config is used automatically if no config is supplied.
+
+### Documentation ###
+
+[Javadoc](https://code77se.github.io/jq/)
 
 ### Examples ###
 
