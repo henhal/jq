@@ -4,7 +4,7 @@ This is a Java 7 compatible promise implementation aiming to conform to the [Pro
 
 The implemenation is heavily influenced by Kris Kowal's [Q](https://github.com/kriskowal/q) JavaScript library.
 
-[Download](https://github.com/code77se/jq/getting-jq)
+[Download](https://github.com/code77se/jq#getting-jq)
 
 ### What is this repository for? ###
 
