@@ -3,6 +3,7 @@ package se.code77.jq.config.android;
 
 import se.code77.jq.config.Config;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 public class AndroidConfig extends Config {
@@ -11,7 +12,17 @@ public class AndroidConfig extends Config {
     }
 
     public static class AndroidDispatcher implements Dispatcher {
-        protected final Handler mHandler = new Handler();
+        protected final Handler mHandler;
+
+        public AndroidDispatcher() {
+            Looper looper = Looper.myLooper();
+
+            if (looper == null) {
+                looper = Looper.getMainLooper();
+            }
+
+            mHandler = new Handler(looper);
+        }
 
         @Override
         public void dispatch(Runnable r) {

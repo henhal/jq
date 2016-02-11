@@ -115,7 +115,8 @@ public abstract class Config {
     public final boolean monitorUnterminated;
 
     /**
-     * Create a dispatcher capable of dispatching events to the current thread
+     * Create a dispatcher capable of dispatching events to the current thread;
+     * or if the current thread does not implement an event loop, to another thread that does.
      * @return Dispatcher
      */
     public abstract Dispatcher createDispatcher();
