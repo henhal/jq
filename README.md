@@ -13,7 +13,15 @@ The implemenation is heavily influenced by Kris Kowal's [Q](https://github.com/k
 
 ### How do I get set up? ###
 
-* Download the latest JAR [here](todo) or use Gradle to include the library in your project.
+* Download the latest JAR [here](http://TODO) or use Gradle to include the library in your project.
+
+##### Gradle
+```groovy
+dependencies {
+    compile 'se.code77.jq:jq:1.0.+'
+}
+````
+
 * The library expects a Config object to be passed at startup. The Config object serves as an integration layer to enable using the library in custom environments. It supports Android's event model by default, but may be tailored to your needs. The library itself has no dependencies except for standard Java7.
 
 ### Examples ###
