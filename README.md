@@ -4,11 +4,22 @@ This is a Java 7 compatible promise implementation aiming to conform to the [Pro
 
 The implemenation is heavily influenced by Kris Kowal's [Q](https://github.com/kriskowal/q) JavaScript library.
 
+[Download](https://github.com/code77se/jq/getting-jq)
+
 ### What is this repository for? ###
 
-* Promises enables you to easily adopt a clean and simple asynchronous programming style in an event driven environment.
-* This library has built-in support for Android and offers a cleaner approach to asynchronous programming than for example `AsyncTask`, thanks to the chaining capabilities of promises.
-* The Promise object in this library can be used to wrap other well-known asynchronous mechanisms such as Java 8 `CompletionStage`, Koush Dutta's AndroidAsync/Ion `Future` implementation or standard Java5 `Future`.
+Promises enables you to easily adopt a clean and simple asynchronous programming style in an event driven environment. Like Futures, Promises represent the pending result of a task. When the task completes or fails, the result or error can be retrieved. However, unlike standard Java Futures, which only offers blocking methods to retrieve the result of the task, Promises may be observed using callbacks that are invoked asynchronously when the task is complete. 
+
+A promise is said to be resolved or fulfilled when the task associated with the promise is complete, and rejected if the task fails. To observe the resolution or rejection of a promise, the `then` method (and/or any of its variants) is used. Since `then` returns a new promise, which will be resolved or rejected depending on the outcome of the next task initiated inside the callback for the previous task, promises can effectively be chained - the outcome of a promise is either directly passed to the appropriate callback, or if no such callback is registered, propagated to the next promise in the chain. This means that you can for example place one single rejection handler at the end of a promise chain, which will catch any error occurring throughout the entire chain of tasks, similar to a try/catch block in synchronous code. It also means you can get rid of excessive indentation caused by callbacks registering callbacks registering callbacks.
+
+Promises are ideal for code that may be broken down into multiple, shorter tasks that depend on each other. Each step of the task is then typically performed in the fulfillment callback for the previous task. This is very flexible because each step may return either a direct value, such as a `String` (which must then be wrapped in a `Value`), or a promise associated with a new task. In case a direct value is returned or an exception is thrown, it will be used to directly resolve/reject the next promise in the chain. On the other hand, if a new promise is returned, the next promise in the chain will be resolved/rejected with the value of the new promise once it's done.
+
+A caller receiving a promise may only observe its state and attach callbacks to it, never modify its state. Only the task that created the promise may modify it. To accomplish this, promises can only be created by calling any of the `defer` methods on the `JQ` class. These methods give the task access to a deferred object which may be used to modify the state of a promise (however, note that the state of a promise may be modified only once). There are also convenience methods for creating promises for tasks handled with standard Java concurrent classes such as `Callable` and `Executor`.
+
+The `JQ` class also contains several useful utilities. For example, multiple parallel asynchronous tasks can be coordinated using the `all`, `any` or `race` methods.
+
+The library may be used in basically any Java environment using an event loop. It offers a `Config` class used to integrate event dispatching into the host environment, and has built-in support for Android, relying on `Looper` and `Handler`. The library offers utilities for wrapping other well-known asynchronous mechanisms such as Java 8 `CompletionStage`, Koushik Dutta's AndroidAsync/Ion `Future` implementation or standard Java5 `Future` into promises.
+
 
 
 ### Getting JQ ###
@@ -37,7 +48,7 @@ dependencies {
 
 The library expects a Config object to be passed at startup. The Config object serves as an integration layer to enable using the library in custom environments. It supports Android's event model by default, but may be tailored to your needs. The library itself has no dependencies except for standard Java7. For Android, a default config is used automatically if no config is supplied.
 
-### Documentation ###
+### API documentation ###
 
 [Javadoc](https://code77se.github.io/jq/)
 
