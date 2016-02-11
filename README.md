@@ -11,13 +11,20 @@ The implemenation is heavily influenced by Kris Kowal's [Q](https://github.com/k
 * The Promise object in this library can be used to wrap other well-known asynchronous mechanisms such as Java 8 `CompletionStage`, Koush Dutta's AndroidAsync/Ion `Future` implementation or standard Java5 `Future`.
 
 
-### How do I get set up? ###
+### Getting JQ ###
 
-#### Getting the library ####
-
-##### JAR 
+##### Jars 
 
 [jq.jar](http://TODO)
+
+##### Maven
+```xml
+<dependency>
+   <groupId>se.code77.jq</groupId>
+   <artifactId>jq</artifactId>
+   <version>[1.0.0,)</version>
+</dependency>
+```
 
 ##### Gradle
 ```groovy
@@ -26,7 +33,7 @@ dependencies {
 }
 ````
 
-#### Configuration
+### Configuration
 
 The library expects a Config object to be passed at startup. The Config object serves as an integration layer to enable using the library in custom environments. It supports Android's event model by default, but may be tailored to your needs. The library itself has no dependencies except for standard Java7. For Android, a default config is used automatically if no config is supplied.
 
