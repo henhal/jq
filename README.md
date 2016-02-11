@@ -19,7 +19,6 @@ The implemenation is heavily influenced by Kris Kowal's [Q](https://github.com/k
 ### Examples ###
 
 ```
-#!java
 
 // Creating a promise for a blocking background task and resolving it upon completion
 private Promise<Integer> someOtherMethod(final String x) {
@@ -75,4 +74,4 @@ return JQ.wrap(Ion.with(mContext).load("http://foobar.com").
 
 ### Who do I talk to? ###
 
-* Henrik Hall (hallcode77@gmail.com)
+* henrik@code77.se
