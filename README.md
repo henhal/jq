@@ -40,7 +40,7 @@ The library may be used in basically any Java environment using an event loop. I
 ##### Gradle
 ```groovy
 dependencies {
-    compile 'se.code77.jq:jq:1.0.+'
+    compile 'se.code77.jq:jq:1.0.1+'
 }
 ````
 
