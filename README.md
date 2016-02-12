@@ -54,53 +54,108 @@ The library expects a Config object to be passed at startup. The Config object s
 
 ### Examples ###
 
+Note that folded, "lambda-like" syntax is used here for reduced verbosity.
+
 ```
 
-// Creating a promise for a blocking background task and resolving it upon completion
-private Promise<Integer> someOtherMethod(final String x) {
-  return JQ.defer(deferred -> {
-    new Thread() {
-      public void run() {
-        try {
-          int res = waitForSomething(x);
-          deferred.resolve(res);
-        } catch (InterruptedException e) {
-          deferred.reject(e);
-        }
-      }
-    }.start();
-  });
-}
-
-// Calling a method returning a promise and chaining the result to a set of 
-// other asynchronous actions and an error handler
-someMethod().then(x -> {
-  return someOtherMethod(x);
+// Calling a method returning a promise and chaining the result to a set of
+// other asynchronous tasks or values, and attach an error handler at the end
+doSomething().then(x -> {
+  // return a promise for some new task
+  return doSomethingElse(x);
 }).then(y -> {
   if (y > 0) {
-    return Value.wrap(y * 2);
+    // return a direct value
+    return Value.wrap(y);
+  } else if (y == 0) {
+    // return a promise for some new task
+    return doYetAnotherThing();
   } else {
+    // throw an exception, this will mean that the fail block below is run
     throw new IllegalStateException("Something");
   }
 }).then(z -> {
+  // return a new direct value
   return Value.wrap("Foobar");
 }).fail(err -> {
-  // Exception was thrown  
+  // Exception was thrown, do something with it
 }).done();
 
 
 // Wrapping Ion Future
 return JQ.wrap(Ion.with(mContext).load("http://foobar.com").
                asJsonObject()).then(json -> {
-  // Note that Future:s may be returned without wrapping
-  return Ion.with(mContext).load(json.get("url")).asJsonObject();	      
+  // Note that Future:s may be returned without wrapping, the library will handle that
+  return Ion.with(mContext).load(json.get("url")).asJsonObject();
 }).then(data -> {
   return parseJson(json);
 }).then(data -> {
   // Do something with parsed data
-}).fail(err -> {  
+}).fail(err -> {
   // Error handling
 }).done();
+
+// Creating a promise for a blocking background task and resolving it upon completion
+private Promise<Integer> doSomething(final String x) {
+  return JQ.defer(deferred -> {
+    //Manually offload the task to a new thread an resolve/reject the promise appropriately
+    new Thread(() -> {
+      try {
+        int res = waitForSomething(x);
+        deferred.resolve(res);
+      } catch (SomeException e) {
+        deferred.reject(e);
+      }
+    }).start();
+  });
+}
+
+// Alternative, even simpler, version using a Callable task and letting JQ run the task with a default Executor
+private Promise<Integer> doSomethingElse(final String x) {
+  return JQ.defer(() -> {
+    // Note that this will be run on a worker thread
+    try {
+      return waitForSomething(x);
+    } catch (IOException e) {
+      throw new SomeException("Something happened");
+    }
+  });
+}
+
+// Wrap an existing asynchronous callback-based operation in a promise
+private Promise<String> doYetAnotherThing() {
+  return JQ.defer((deferred) -> {
+    someAsyncOperation((result, value) -> {
+      if (result == 0) {
+        deferred.resolve(value);
+      } else {
+        deferred.reject(new SomeException("Operation failed with code " + result));
+      }
+    });
+  });
+}
+
+// Synchronize multiple parallel operations
+private Promise<Boolean> someFuzzyCheck() {
+  // Assuming getFirstValue et. al. all return promises for the same type, e.g. Promise<String>,
+  // we can run them in parallel and use JQ.all to wait until all values are available. The
+  // resulting promise will be resolved with a List<String>.
+  return JQ.all(getFirstValue(), getSecondValue(), getThirdValue()).then((values) -> {
+    String first = values.get(0);
+    String second = values.get(1);
+    String third = values.get(2);
+
+    // Return some result that depends on all calculated values
+    return Value.wrap(first.equals(second) || first.equals(third));
+  });
+}
+
+// Run two operations in parallel, resolving the promise with the result of the operation that finishes first.
+// The resulting promise will be rejected only if all operations fails.
+private Promise<String> getStuff() {
+  return JQ.any(getValueFromDisk(), getValueFromNetwork());
+}
+
 
 
 
