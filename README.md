@@ -55,9 +55,26 @@ The library expects a Config object to be passed at startup. The Config object s
 ### Examples ###
 
 Note that folded, "lambda-like" syntax is used here for reduced verbosity.
+This means that the folded syntax
 
 ```
+then(values -> { ... } );
+``` 
 
+actually represents
+
+```
+then(new OnFulfilledCallback({
+     @Override
+     public Future<Y> onFulfilled(X value) {
+       ...
+     }
+   });
+```
+
+Although this looks verbose, most IDEs will assist both with generating the stubs and folding them for increased readability.
+
+```
 // Calling a method returning a promise and chaining the result to a set of
 // other asynchronous tasks or values, and attach an error handler at the end
 doSomething().then(x -> {
@@ -124,7 +141,7 @@ private Promise<Integer> doSomethingElse(final String x) {
 
 // Wrap an existing asynchronous callback-based operation in a promise
 private Promise<String> doYetAnotherThing() {
-  return JQ.defer((deferred) -> {
+  return JQ.defer(deferred -> {
     someAsyncOperation((result, value) -> {
       if (result == 0) {
         deferred.resolve(value);
@@ -140,7 +157,7 @@ private Promise<Boolean> someFuzzyCheck() {
   // Assuming getFirstValue et. al. all return promises for the same type, e.g. Promise<String>,
   // we can run them in parallel and use JQ.all to wait until all values are available. The
   // resulting promise will be resolved with a List<String>.
-  return JQ.all(getFirstValue(), getSecondValue(), getThirdValue()).then((values) -> {
+  return JQ.all(getFirstValue(), getSecondValue(), getThirdValue()).then(values -> {
     String first = values.get(0);
     String second = values.get(1);
     String third = values.get(2);
