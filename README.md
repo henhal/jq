@@ -2,7 +2,7 @@
 
 This is a Java 7 compatible promise implementation aiming to conform to the [Promises/A+](https://promisesaplus.com/) specification to as much extent as possible, with the constraints given by the Java 7 language.
 
-The implemenation is heavily influenced by Kris Kowal's [Q](https://github.com/kriskowal/q) JavaScript library.
+The implementation is heavily influenced by Kris Kowal's [Q](https://github.com/kriskowal/q) JavaScript library.
 
 [Download](https://github.com/code77se/jq#getting-jq)
 
