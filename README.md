@@ -73,6 +73,7 @@ then(new OnFulfilledCallback({
 ```
 
 Although this looks verbose, most IDEs will assist both with generating the stubs and folding them for increased readability.
+Now on with the examples:
 
 ```
 // Calling a method returning a promise and chaining the result to a set of
