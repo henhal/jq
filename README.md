@@ -33,7 +33,7 @@ The library may be used in basically any Java environment using an event loop. I
 <dependency>
    <groupId>se.code77.jq</groupId>
    <artifactId>jq</artifactId>
-   <version>[1.0.0,)</version>
+   <version>[1.0.1,)</version>
 </dependency>
 ```
 
