@@ -11,6 +11,10 @@ public class AndroidConfig extends Config {
         super(monitorUnterminated);
     }
 
+    public AndroidConfig(boolean monitorUnterminated, LogLevel logLevel) {
+        super(monitorUnterminated, logLevel);
+    }
+
     public static class AndroidDispatcher implements Dispatcher {
         protected final Handler mHandler;
 
@@ -38,24 +42,42 @@ public class AndroidConfig extends Config {
     public static class AndroidLogger implements Logger {
         private static final String LOG_TAG = "Promise";
 
+        private final LogLevel mLogLevel;
+
+        public AndroidLogger(LogLevel logLevel) {
+            mLogLevel = logLevel;
+        }
+
+        private boolean hasLevel(LogLevel level) {
+            return mLogLevel.ordinal() <= level.ordinal();
+        }
+
         @Override
         public void debug(String s) {
-            Log.d(LOG_TAG, s);
+            if (hasLevel(LogLevel.DEBUG)) {
+                Log.d(LOG_TAG, s);
+            }
         }
 
         @Override
         public void info(String s) {
-            Log.i(LOG_TAG, s);
+            if (hasLevel(LogLevel.INFO)) {
+                Log.i(LOG_TAG, s);
+            }
         }
 
         @Override
         public void warn(String s) {
-            Log.w(LOG_TAG, s);
+            if (hasLevel(LogLevel.WARN)) {
+                Log.w(LOG_TAG, s);
+            }
         }
 
         @Override
         public void error(String s) {
-            Log.e(LOG_TAG, s);
+            if (hasLevel(LogLevel.ERROR)) {
+                Log.e(LOG_TAG, s);
+            }
         }
     }
 
@@ -66,6 +88,6 @@ public class AndroidConfig extends Config {
 
     @Override
     public Logger getLogger() {
-        return new AndroidLogger();
+        return new AndroidLogger(logLevel);
     }
 }

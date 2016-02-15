@@ -63,6 +63,13 @@ public abstract class Config {
         void error(String s);
     }
 
+    public enum LogLevel {
+        DEBUG,
+        INFO,
+        WARN,
+        ERROR
+    }
+
     private static Config CONFIG;
 
     /**
@@ -103,8 +110,18 @@ public abstract class Config {
     }
 
     protected Config(boolean monitorUnterminated) {
-        this.monitorUnterminated = monitorUnterminated;
+        this(monitorUnterminated, LogLevel.WARN);
     }
+
+    protected Config(boolean monitorUnterminated, LogLevel logLevel) {
+        this.monitorUnterminated = monitorUnterminated;
+        this.logLevel = logLevel;
+    }
+
+    /**
+     * Log level
+     */
+    public final LogLevel logLevel;
 
     /**
      * Set to true if unterminated promise chains should cause warnings to be
