@@ -33,14 +33,14 @@ The library may be used in basically any Java environment using an event loop. I
 <dependency>
    <groupId>se.code77.jq</groupId>
    <artifactId>jq</artifactId>
-   <version>[1.0.1,)</version>
+   <version>[1.0.2,)</version>
 </dependency>
 ```
 
 ##### Gradle
 ```groovy
 dependencies {
-    compile 'se.code77.jq:jq:1.0.1+'
+    compile 'se.code77.jq:jq:1.0.+'
 }
 ````
 
