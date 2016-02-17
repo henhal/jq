@@ -1,6 +1,8 @@
 
 package se.code77.jq;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -229,7 +231,7 @@ class PromiseImpl<V> implements Promise<V> {
 
     @Override
     public String toString() {
-        return getLogPrefix() + mState.toString();
+        return getLogPrefix() + mState.toString() + (mTerminate ? ", TERMINATE" : "");
     }
 
     private void ensurePending() {
@@ -337,6 +339,12 @@ class PromiseImpl<V> implements Promise<V> {
                                 link.nextPromise._resolve(value);
                                 return null;
                             }
+                        }, new OnRejectedCallback() {
+                            @Override
+                            public Future onRejected(Exception reason) throws Exception {
+                                link.nextPromise._reject(reason);
+                                return null;
+                            }
                         }).done();
                     } else {
                         link.nextPromise._resolve(null);
@@ -344,6 +352,10 @@ class PromiseImpl<V> implements Promise<V> {
                 } catch (UnhandledRejectionException e) {
                     throw e;
                 } catch (Exception reason) {
+                    StringWriter sw = new StringWriter();
+                    reason.printStackTrace(new PrintWriter(sw));
+                    debug("Promise rejected from callback: " + sw.toString());
+
                     link.nextPromise._reject(reason);
                 }
             }
