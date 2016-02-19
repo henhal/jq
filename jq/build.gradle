@@ -43,6 +43,18 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
+task debugJar(type: Jar) {
+    from 'build/intermediates/classes/debug/'
+    archiveName "jq-$version-debug.jar"
+}
+
+task releaseJar(type: Jar) {
+    from 'build/intermediates/classes/release/'
+    archiveName "jq-$version-release.jar"
+}
+
+task jar(dependsOn: [debugJar, releaseJar])
+
 artifacts {
     archives javadocJar
     archives sourcesJar
