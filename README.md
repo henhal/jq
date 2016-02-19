@@ -24,9 +24,13 @@ The library may be used in basically any Java environment using an event loop. I
 
 ### Getting JQ ###
 
+JQ is published on [Bintray/jCenter](https://bintray.com/code77/maven/jq) and may be sourced through maven or gradle.
+
+
 ##### Jars 
 
-[jq.jar](http://TODO)
+* [jq-1.0.2-debug.jar](http://code77se.github.io/jq/bin/jq-1.0.2-debug.jar)
+* [jq-1.0.2-release.jar](http://code77se.github.io/jq/bin/jq-1.0.2-release.jar)
 
 ##### Maven
 ```xml
