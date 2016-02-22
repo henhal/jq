@@ -37,7 +37,7 @@ JQ is published on [Bintray/jCenter](https://bintray.com/code77/maven/jq) and ma
 <dependency>
    <groupId>se.code77.jq</groupId>
    <artifactId>jq</artifactId>
-   <version>[1.0.2,)</version>
+   <version>[1.0.3,)</version>
 </dependency>
 ```
 
