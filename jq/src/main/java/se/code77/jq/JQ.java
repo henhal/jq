@@ -616,23 +616,27 @@ public final class JQ {
         return defer(new DeferredHandler<List<V>>() {
             @Override
             public void handle(final Deferred<List<V>> deferred) {
-                new PromiseListStateChecker<V>() {
-                    @Override
-                    public void onStateChanged(int position) {
-                        if (mFulfilledCount == mStates.size()) {
-                            List<V> result = new ArrayList<>();
+                if (promises.size() == 0) {
+                    deferred.resolve(new ArrayList<V>());
+                } else {
+                    new PromiseListStateChecker<V>() {
+                        @Override
+                        public void onStateChanged(int position) {
+                            if (mFulfilledCount == mStates.size()) {
+                                List<V> result = new ArrayList<>();
 
-                            for (StateSnapshot<V> state : mStates) {
-                                result.add(state.value);
+                                for (StateSnapshot<V> state : mStates) {
+                                    result.add(state.value);
+                                }
+
+                                deferred.resolve(result);
+                            } else if (mStates.get(position).state == State.REJECTED
+                                    && mRejectedCount == 1) {
+                                deferred.reject(mStates.get(position).reason);
                             }
-
-                            deferred.resolve(result);
-                        } else if (mStates.get(position).state == State.REJECTED
-                                && mRejectedCount == 1) {
-                            deferred.reject(mStates.get(position).reason);
                         }
-                    }
-                }.checkStates(promises);
+                    }.checkStates(promises);
+                }
             }
         });
     }
@@ -669,20 +673,24 @@ public final class JQ {
         return defer(new DeferredHandler<V>() {
             @Override
             public void handle(final Deferred<V> deferred) {
-                new PromiseListStateChecker<V>() {
-                    @Override
-                    public void onStateChanged(int position) {
-                        final StateSnapshot<V> state = mStates.get(position);
+                if (promises.size() == 0) {
+                    deferred.resolve(null);
+                } else {
+                    new PromiseListStateChecker<V>() {
+                        @Override
+                        public void onStateChanged(int position) {
+                            final StateSnapshot<V> state = mStates.get(position);
 
-                        if (state.state == State.FULFILLED && mFulfilledCount == 1) {
-                            deferred.resolve(state.value);
-                        } else if (mRejectedCount == mStates.size()) {
-                            deferred.reject(new Exception(
-                                    "Can't get fulfillment value from any promise, all "
-                                            + "promises were rejected."));
+                            if (state.state == State.FULFILLED && mFulfilledCount == 1) {
+                                deferred.resolve(state.value);
+                            } else if (mRejectedCount == mStates.size()) {
+                                deferred.reject(new Exception(
+                                        "Can't get fulfillment value from any promise, all "
+                                                + "promises were rejected."));
+                            }
                         }
-                    }
-                }.checkStates(promises);
+                    }.checkStates(promises);
+                }
             }
         });
     }
@@ -700,14 +708,18 @@ public final class JQ {
         return defer(new DeferredHandler<List<StateSnapshot<V>>>() {
             @Override
             public void handle(final Deferred<List<StateSnapshot<V>>> deferred) {
-                new PromiseListStateChecker<V>() {
-                    @Override
-                    public void onStateChanged(int position) {
-                        if (mFulfilledCount + mRejectedCount == mStates.size()) {
-                            deferred.resolve(mStates);
+                if (promises.size() == 0) {
+                    deferred.resolve(new ArrayList<StateSnapshot<V>>());
+                } else {
+                    new PromiseListStateChecker<V>() {
+                        @Override
+                        public void onStateChanged(int position) {
+                            if (mFulfilledCount + mRejectedCount == mStates.size()) {
+                                deferred.resolve(mStates);
+                            }
                         }
-                    }
-                }.checkStates(promises);
+                    }.checkStates(promises);
+                }
             }
         });
     }
