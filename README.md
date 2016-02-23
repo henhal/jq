@@ -29,8 +29,8 @@ JQ is published on [Bintray/jCenter](https://bintray.com/code77/maven/jq) and ma
 
 ##### Jars 
 
-* [jq-1.0.2-debug.jar](http://code77se.github.io/jq/bin/1.0.2/jq-1.0.2-debug.jar)
-* [jq-1.0.2-release.jar](http://code77se.github.io/jq/bin/1.0.2/jq-1.0.2-release.jar)
+* [jq-1.0.3-debug.jar](http://code77se.github.io/jq/bin/1.0.3/jq-1.0.3-debug.jar)
+* [jq-1.0.3-release.jar](http://code77se.github.io/jq/bin/1.0.3/jq-1.0.3-release.jar)
 
 ##### Maven
 ```xml
