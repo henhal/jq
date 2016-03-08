@@ -41,12 +41,14 @@ public class Assert extends org.junit.Assert {
         assertSame(snapshot.reason, reason);
     }
 
-    public static void assertThrows(Callable<?> task, Class<? extends Exception> expectedExceptionClass) {
+    public static Exception assertThrows(Callable<?> task, Class<? extends Exception> expectedExceptionClass) {
         try {
             task.call();
             assertTrue(false);
+            return null;
         } catch (Exception e) {
             assertSame(expectedExceptionClass, e.getClass());
+            return e;
         }
     }
 }

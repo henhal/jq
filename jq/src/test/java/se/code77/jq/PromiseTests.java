@@ -3,9 +3,13 @@ package se.code77.jq;
 import org.junit.Test;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static se.code77.jq.util.Assert.*;
 
@@ -15,6 +19,24 @@ import se.code77.jq.Promise.OnRejectedCallback;
 import se.code77.jq.util.AsyncTests;
 
 public class PromiseTests extends AsyncTests {
+    private static final String TEST_VALUE1 = "Hello";
+    private static final String TEST_VALUE2 = "World";
+    private static final Exception TEST_REASON1 = new IllegalArgumentException("foo");
+    private static final Exception TEST_REASON2 = new IllegalArgumentException("bar");
+
+    private static class SlowTask<T> implements Callable<T> {
+        public final T value;
+
+        public SlowTask(T value) {
+            this.value = value;
+        }
+
+        @Override
+        public T call() throws Exception {
+            Thread.sleep(1000);
+            return value;
+        }
+    }
 
     @Test
     public void pending_isPending() throws Exception {
@@ -33,7 +55,7 @@ public class PromiseTests extends AsyncTests {
         });
 
         assertFalse(sem.tryAcquire(2, TimeUnit.SECONDS));
-        deferred.resolve("Hello");
+        deferred.resolve(TEST_VALUE1);
     }
 
     @Test
@@ -51,11 +73,10 @@ public class PromiseTests extends AsyncTests {
             }
         });
 
-        String value = "Hello";
-        deferred.resolve(value);
+        deferred.resolve(TEST_VALUE1);
 
         assertTrue(sem.tryAcquire(2, TimeUnit.SECONDS));
-        assertResolved(p, value);
+        assertResolved(p, TEST_VALUE1);
     }
 
 
@@ -83,8 +104,7 @@ public class PromiseTests extends AsyncTests {
 
     @Test
     public void preResolved_isResolved() throws Exception {
-        String value = "Hello";
-        Promise<String> p = JQ.resolve(value);
+        Promise<String> p = JQ.resolve(TEST_VALUE1);
 
         final Semaphore sem = new Semaphore(0);
 
@@ -97,7 +117,7 @@ public class PromiseTests extends AsyncTests {
         });
 
         assertTrue(sem.tryAcquire(2, TimeUnit.SECONDS));
-        assertResolved(p, value);
+        assertResolved(p, TEST_VALUE1);
     }
 
     @Test
@@ -134,12 +154,12 @@ public class PromiseTests extends AsyncTests {
         final Deferred<String> deferred = JQ.defer();
         Promise<String> p = deferred.promise;
 
-        deferred.resolve("resolve1");
+        deferred.resolve(TEST_VALUE1);
 
         assertThrows(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                deferred.resolve("resolve2");
+                deferred.resolve(TEST_VALUE2);
                 return null;
             }
         }, IllegalStateException.class);
@@ -147,7 +167,7 @@ public class PromiseTests extends AsyncTests {
         assertThrows(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                deferred.reject(new Exception("reject1"));
+                deferred.reject(TEST_REASON1);
                 return null;
             }
         }, IllegalStateException.class);
@@ -158,12 +178,12 @@ public class PromiseTests extends AsyncTests {
         final Deferred<String> deferred = JQ.defer();
         Promise<String> p = deferred.promise;
 
-        deferred.reject(new Exception("reject1"));
+        deferred.reject(TEST_REASON1);
 
         assertThrows(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                deferred.reject(new Exception("reject2"));
+                deferred.reject(TEST_REASON2);
                 return null;
             }
         }, IllegalStateException.class);
@@ -171,7 +191,7 @@ public class PromiseTests extends AsyncTests {
         assertThrows(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                deferred.resolve("resolve1");
+                deferred.resolve(TEST_VALUE1);
                 return null;
             }
         }, IllegalStateException.class);
@@ -187,33 +207,85 @@ public class PromiseTests extends AsyncTests {
     }
 
     @Test
-    public void resolved_isResolvedSync() {
-        // Promise.get
+    public void resolved_isResolvedSync() throws Exception {
+        Promise<String> p = JQ.resolve(TEST_VALUE1);
+
+        assertEquals(TEST_VALUE1, p.get());
     }
 
     @Test
-    public void rejected_isRejectedSync() {
-        // Promise.get
+    public void rejected_isRejectedSync() throws Exception {
+        final Promise<Void> p = JQ.reject(TEST_REASON1);
+
+        Exception e = assertThrows(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                return p.get();
+            }
+        }, ExecutionException.class);
+
+        assertSame(TEST_REASON1, e.getCause());
     }
 
     @Test
     public void pending_hasTimeoutSync() {
-        // Promise.get(timeout, TimeUnit)
+        Deferred<String> deferred = JQ.defer();
+        final Promise<String> p = deferred.promise;
+
+        assertThrows(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                return p.get(100, TimeUnit.MILLISECONDS);
+            }
+        }, TimeoutException.class);
+    }
+
+    private <T> void resolveChain(final Future<T> future, final T expected) throws InterruptedException {
+        final Semaphore resolved = new Semaphore(0);
+        final Semaphore rejected = new Semaphore(0);
+
+        JQ.resolve(TEST_VALUE1).then(new OnFulfilledCallback<String, T>() {
+            @Override
+            public Future<T> onFulfilled(String value) throws Exception {
+                return future;
+            }
+        }).then(new OnFulfilledCallback<T, Void>() {
+            @Override
+            public Future<Void> onFulfilled(T value) throws Exception {
+                assertEquals(expected, value);
+                resolved.release();
+                return null;
+            }
+        }).fail(new OnRejectedCallback<Void>() {
+            @Override
+            public Future<Void> onRejected(Exception reason) throws Exception {
+                assertTrue(false);
+                rejected.release();
+                return null;
+            }
+        });
+
+        assertTrue(resolved.tryAcquire(2, TimeUnit.SECONDS));
+        assertFalse(rejected.tryAcquire(2, TimeUnit.SECONDS));
     }
 
     @Test
-    public void chained_isResolvedWithValue() {
+    public void chained_isResolvedWithValue() throws InterruptedException {
         // OnFulfilled returns Value, chained fulfillment handlers are invoked
+        resolveChain(Value.wrap(42), 42);
     }
 
     @Test
-    public void chained_isResolvedWithPromise() {
+    public void chained_isResolvedWithPromise() throws InterruptedException {
         // OnFulfilled returns new Promise, chained fulfillment handlers are invoked
+
+        resolveChain(JQ.defer(new SlowTask<>(42)), 42);
     }
 
     @Test
-    public void chained_isResolvedWithFutureTask() {
-        // OnFulfilled returns java.util.concurrent.FutureTask, chained fulfillment handlers are invoked
+    public void chained_isResolvedWithFuture() throws InterruptedException {
+        // OnFulfilled returns java.util.concurrent.Future, chained fulfillment handlers are invoked
+        resolveChain(new FutureTask<>(new SlowTask<>(42)), 42);
     }
 
     @Test
