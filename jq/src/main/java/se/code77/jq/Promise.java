@@ -1,6 +1,7 @@
 
 package se.code77.jq;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +35,25 @@ public interface Promise<V> extends Future<V> {
          *             the rejection of the next promise in the chain.
          */
         Future<NV> onFulfilled(V value) throws Exception;
+    }
+
+    public interface OnFulfilledSpreadCallback<V, NV> {
+    }
+
+    public interface OnFulfilledSpreadCallback1<V, NV> extends OnFulfilledSpreadCallback<List<V>, NV> {
+        public Future<NV> onFulfilled(V v1) throws Exception;
+    }
+
+    public interface OnFulfilledSpreadCallback2<V, NV> extends OnFulfilledSpreadCallback<List<V>, NV> {
+        public Future<NV> onFulfilled(V v1, V v2) throws Exception;
+    }
+
+    public interface OnFulfilledSpreadCallback3<V, NV> extends OnFulfilledSpreadCallback<List<V>, NV> {
+        public Future<NV> onFulfilled(V v1, V v2, V v3) throws Exception;
+    }
+
+    public interface OnFulfilledSpreadCallback4<V, NV> extends OnFulfilledSpreadCallback<List<V>, NV> {
+        public Future<NV> onFulfilled(V v1, V v2, V v3, V v4) throws Exception;
     }
 
     /**
@@ -222,6 +242,39 @@ public interface Promise<V> extends Future<V> {
      *         callback handler.
      */
     public <NV> Promise<NV> then(OnFulfilledCallback<V, NV> onFulfilled);
+
+    /**
+     * Like #then(OnFulfilledCallback, OnRejectedCallback) but only for promised List values. The
+     * elements in the list will be spread as individual arguments on the supplied callback, which
+     * should implement a suitable sub-interface of OnFulfilledSpreadCallback for the appropriate
+     * number of arguments. This is useful when an operation with a fixed amount of distinct values
+     * are called and resolved as a List, e.g. using JQ#all(List).
+     *
+     * @see #then(OnFulfilledCallback, OnRejectedCallback)
+     * @param <NV> Type of the value returned by the callback handlers
+     * @param onFulfilled Fulfillment handler
+     * @return A new promise that will be resolved with the value
+     *         returned/rejected with the reason thrown from the supplied
+     *         callback handler.
+     */
+    public <NV> Promise<NV> spread(
+            OnFulfilledSpreadCallback<V, NV> onFulfilled, OnRejectedCallback<NV> onRejected);
+
+    /**
+     * Like #then(OnFulfilledCallback) but only for promised List values. The elements
+     * in the list will be spread as individual arguments on the supplied callback, which should
+     * implement a suitable sub-interface of OnFulfilledSpreadCallback for the appropriate number of
+     * arguments. This is useful when an operation with a fixed amount of distinct values are called
+     * and resolved as a List, e.g. using JQ#all(List).
+     *
+     * @see #then(OnFulfilledCallback, OnRejectedCallback)
+     * @param <NV> Type of the value returned by the callback handlers
+     * @param onFulfilled Fulfillment handler
+     * @return A new promise that will be resolved with the value
+     *         returned/rejected with the reason thrown from the supplied
+     *         callback handler.
+     */
+    public <NV> Promise<NV> spread(OnFulfilledSpreadCallback<V, NV> onFulfilled);
 
     /**
      * Observe the state of this promise by adding a rejection callback which
