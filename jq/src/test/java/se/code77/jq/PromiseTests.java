@@ -378,16 +378,11 @@ public class PromiseTests extends AsyncTests {
         // Promise is rejected but too late, TimeoutException is thrown
         Promise<String> p = JQ.defer(new SlowTask<String>(TEST_REASON1, 2000)).timeout(1000);
 
-        BlockingDataHolder<Exception> fail1 = new BlockingDataHolder<>();
-        p.fail(new DataRejectedCallback<>(fail1));
-
         Thread.sleep(500);
         assertPending(p);
 
         Thread.sleep(1000);
         assertRejected(p, TimeoutException.class);
-
-        assertNoData(fail1, 1000);
     }
 
     @Test
@@ -414,7 +409,7 @@ public class PromiseTests extends AsyncTests {
     @Test
     public void delay_isPending() throws InterruptedException {
         // New promise is also pending after delay has passed if original promise is not resolved yet
-        Promise<String> p = JQ.defer(new SlowTask<String>(TEST_REASON1, 2000)).delay(1000);
+        Promise<String> p = JQ.defer(new SlowTask<>(TEST_VALUE1, 2000)).delay(1000);
 
         Thread.sleep(1500);
         assertPending(p);
@@ -509,6 +504,15 @@ public class PromiseTests extends AsyncTests {
         Promise<String> p1 = JQ.defer(new SlowTask<>(TEST_VALUE1, 1000));
         Promise<String> p2 = JQ.resolve(TEST_VALUE1);
         Promise<String> p3 = p1.join(p2);
+
+        Thread.sleep(500);
+        assertPending(p3);
+        Thread.sleep(1000);
+        assertResolved(p3, TEST_VALUE1);
+
+        p1 = JQ.resolve(TEST_VALUE1);
+        p2 = JQ.defer(new SlowTask<>(TEST_VALUE1, 1000));
+        p3 = p1.join(p2);
 
         Thread.sleep(500);
         assertPending(p3);

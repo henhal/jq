@@ -13,7 +13,7 @@ public class TestConfig {
         return sTestThread;
     }
 
-    public static synchronized void init() {
+    public static synchronized void start() {
         if (sTestThread == null) {
             sTestThread = new TestThread("Async event thread");
             sTestThread.start();
@@ -56,7 +56,13 @@ public class TestConfig {
                 }
             });
         }
+    }
 
+    public static synchronized void stop() {
+        if (sTestThread != null) {
+            sTestThread.exit();
+            sTestThread = null;
+        }
     }
 
     private static class TestDispatcher implements Config.Dispatcher {
