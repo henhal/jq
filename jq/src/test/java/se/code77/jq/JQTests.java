@@ -2,12 +2,16 @@ package se.code77.jq;
 
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static se.code77.jq.util.Assert.*;
 
 import se.code77.jq.JQ.Deferred;
 import se.code77.jq.Promise.OnFulfilledCallback;
 import se.code77.jq.Promise.OnRejectedCallback;
 import se.code77.jq.util.AsyncTests;
+import se.code77.jq.util.SlowTask;
 
 public class JQTests extends AsyncTests {
     @Test
@@ -31,23 +35,42 @@ public class JQTests extends AsyncTests {
     }
 
     @Test
-    public void all_isResolvedList() {
+    public void all_isResolvedList() throws InterruptedException {
+        Promise<List<String>> p = JQ.all(Arrays.asList(JQ.resolve(TEST_VALUE1), JQ.defer(new SlowTask<>(TEST_VALUE2, 1000))));
 
+        Thread.sleep(500);
+        assertPending(p);
+        Thread.sleep(1500);
+        assertResolved(p, Arrays.asList(TEST_VALUE1, TEST_VALUE2));
     }
 
     @Test
-    public void all_isResolvedVarArg() {
+    public void all_isResolvedVarArg() throws InterruptedException {
+        Promise<List<String>> p = JQ.all(JQ.resolve(TEST_VALUE1), JQ.resolve(TEST_VALUE2));
 
+        Thread.sleep(100);
+        assertResolved(p, Arrays.asList(TEST_VALUE1, TEST_VALUE2));
     }
 
     @Test
-    public void all_isRejected() {
+    public void all_isRejected() throws InterruptedException {
+        Promise<List<String>> p = JQ.all(JQ.resolve(TEST_VALUE1), JQ.defer(new SlowTask<String>(TEST_REASON1, 1000)));
 
+        Thread.sleep(500);
+        assertPending(p);
+        Thread.sleep(1500);
+        assertRejected(p);
     }
 
     @Test
-    public void all_isPending() {
+    public void all_isPending() throws InterruptedException {
         // at least one promise is not done -> resulting is pending forever
+        Promise<List<String>> p = JQ.all(JQ.defer(new SlowTask<>(TEST_VALUE1, 1000)), JQ.defer(new SlowTask<String>(TEST_REASON1, 2000)));
+
+        Thread.sleep(500);
+        assertPending(p);
+        Thread.sleep(1000);
+        assertPending(p);
     }
 
     @Test

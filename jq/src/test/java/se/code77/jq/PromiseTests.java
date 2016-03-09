@@ -14,7 +14,6 @@ import static se.code77.jq.util.Assert.*;
 
 import se.code77.jq.JQ.Deferred;
 import se.code77.jq.Promise.OnFulfilledCallback;
-import se.code77.jq.Promise.OnRejectedCallback;
 import se.code77.jq.Promise.UnhandledRejectionException;
 import se.code77.jq.util.AsyncTests;
 import se.code77.jq.util.BlockingDataHolder;
@@ -24,10 +23,6 @@ import se.code77.jq.util.SlowTask;
 import se.code77.jq.util.TestConfig;
 
 public class PromiseTests extends AsyncTests {
-    private static final String TEST_VALUE1 = "Hello";
-    private static final String TEST_VALUE2 = "World";
-    private static final Exception TEST_REASON1 = new IllegalArgumentException("foo");
-    private static final Exception TEST_REASON2 = new IllegalArgumentException("bar");
 
     @Test
     public void pending_isPending() throws Exception {
