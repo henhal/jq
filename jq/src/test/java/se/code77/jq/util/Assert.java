@@ -1,6 +1,9 @@
 package se.code77.jq.util;
 
+import org.junit.rules.Timeout;
+
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeoutException;
 
 import se.code77.jq.Promise;
 
@@ -29,7 +32,7 @@ public class Assert extends org.junit.Assert {
         assertNull(snapshot.reason);
     }
 
-    public static void assertRejected(Promise<?> p, Exception reason) {
+    public static void assertRejected(Promise<?> p) {
         assertFalse(p.isPending());
         assertFalse(p.isFulfilled());
         assertTrue(p.isRejected());
@@ -38,7 +41,15 @@ public class Assert extends org.junit.Assert {
         Promise.StateSnapshot<?> snapshot = p.inspect();
         assertSame(snapshot.state, Promise.State.REJECTED);
         assertNull(snapshot.value);
-        assertSame(snapshot.reason, reason);
+    }
+    public static void assertRejected(Promise<?> p, Exception reason) {
+        assertRejected(p);
+        assertSame(p.inspect().reason, reason);
+    }
+
+    public static void assertRejected(Promise<?> p, Class<? extends Exception> reasonClass) {
+        assertRejected(p);
+        assertTrue(reasonClass.isAssignableFrom(p.inspect().reason.getClass()));
     }
 
     public static Exception assertThrows(Callable<?> task, Class<? extends Exception> expectedExceptionClass) {
@@ -47,8 +58,40 @@ public class Assert extends org.junit.Assert {
             assertTrue(false);
             return null;
         } catch (Exception e) {
-            assertSame(expectedExceptionClass, e.getClass());
+            assertTrue(expectedExceptionClass.isAssignableFrom(e.getClass()));
             return e;
         }
     }
+
+    public static <T> void assertData(BlockingDataHolder<T> holder, long timeoutMillis, T expected) {
+        try {
+            assertEquals(expected, holder.get(timeoutMillis));
+        } catch (TimeoutException e) {
+            fail("Data not set");
+        } catch (InterruptedException e) {
+            fail("Test interrupted");
+        }
+
+    }
+
+    public static <T> void assertData(BlockingDataHolder<T> holder, long timeoutMillis) {
+        try {
+            holder.get(timeoutMillis);
+        } catch (TimeoutException e) {
+            fail("Data was not set");
+        } catch (InterruptedException e) {
+            fail("Test interrupted");
+        }
+    }
+
+    public static <T> void assertNoData(BlockingDataHolder<T> holder, long timeoutMillis) {
+        try {
+            holder.get(timeoutMillis);
+            fail("Data was set");
+        } catch (TimeoutException e) {
+        } catch (InterruptedException e) {
+            fail("Test interrupted");
+        }
+    }
+
 }

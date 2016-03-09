@@ -2,50 +2,60 @@ package se.code77.jq.util;
 
 import java.util.PriorityQueue;
 
+import se.code77.jq.Promise;
+import se.code77.jq.Promise.UnhandledRejectionException;
 import se.code77.jq.config.Config;
 
 public class TestConfig {
-    public static void init() {
-        final TestThread tt = new TestThread();
-        tt.start();
+    private static TestThread sTestThread;
 
-        Config.setConfig(new Config(true) {
-            @Override
-            public Dispatcher createDispatcher() {
-                return new TestDispatcher(tt);
-            }
+    public static TestThread getTestThread() {
+        return sTestThread;
+    }
 
-            @Override
-            public Logger getLogger() {
-                return new Logger() {
-                    private void log(String level, String s) {
-                        System.out.println(System.currentTimeMillis() + " [PROMISE." + level + "] "
-                                + s);
-                    }
+    public static synchronized void init() {
+        if (sTestThread == null) {
+            sTestThread = new TestThread("Async event thread");
+            sTestThread.start();
 
-                    @Override
-                    public void debug(String s) {
-                        log("debug", s);
-                    }
+            Config.setConfig(new Config(true) {
+                @Override
+                public Dispatcher createDispatcher() {
+                    return new TestDispatcher(sTestThread);
+                }
 
-                    @Override
-                    public void info(String s) {
-                        log("info", s);
-                    }
+                @Override
+                public Logger getLogger() {
+                    return new Logger() {
+                        private void log(String level, String s) {
+                            System.out.println(System.currentTimeMillis() + " [PROMISE." + level + "] "
+                                    + s);
+                        }
 
-                    @Override
-                    public void warn(String s) {
-                        log("warn", s);
-                    }
+                        @Override
+                        public void debug(String s) {
+                            log("debug", s);
+                        }
 
-                    @Override
-                    public void error(String s) {
-                        log("error", s);
-                    }
+                        @Override
+                        public void info(String s) {
+                            log("info", s);
+                        }
 
-                };
-            }
-        });
+                        @Override
+                        public void warn(String s) {
+                            log("warn", s);
+                        }
+
+                        @Override
+                        public void error(String s) {
+                            log("error", s);
+                        }
+
+                    };
+                }
+            });
+        }
 
     }
 
@@ -73,7 +83,11 @@ public class TestConfig {
 
     }
 
-    private static class TestThread extends Thread {
+    public static class TestThread extends Thread {
+        public TestThread(String name) {
+            super(name);
+        }
+
         private static class Event implements Comparable<Event> {
             public final Runnable r;
             public final long due;
@@ -91,6 +105,7 @@ public class TestConfig {
 
         private final PriorityQueue<Event> mEvents = new PriorityQueue<Event>();
         private boolean mStopped;
+        private UnhandledRejectionException mUnhandledException;
 
         private synchronized Event getEvent() throws InterruptedException {
             while (!Thread.interrupted()) {
@@ -117,12 +132,19 @@ public class TestConfig {
             System.out.println("Starting event thread");
             while (!mStopped) {
                 try {
-                    Event e = getEvent();
+                    Event event = getEvent();
 
-                    e.r.run();
+                    try {
+                        event.r.run();
+                    } catch (UnhandledRejectionException e) {
+                        System.out.println("Exception in dispatched event " + e);
+                        mStopped = true;
+                        mUnhandledException = e;
+                    }
                 } catch (InterruptedException ex) {
                 }
             }
+            System.out.println("Exiting event thread");
         }
 
         public void exit() {
@@ -134,6 +156,10 @@ public class TestConfig {
         public synchronized void addEvent(Runnable r, long ms) {
             mEvents.add(new Event(r, System.currentTimeMillis() + ms));
             notify();
+        }
+
+        public UnhandledRejectionException getUnhandledException() {
+            return mUnhandledException;
         }
     }
 }
