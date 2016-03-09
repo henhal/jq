@@ -588,10 +588,13 @@ public final class JQ {
             mFulfilledCount = 0;
             mRejectedCount = 0;
 
+            for (Promise<V> p : promises) {
+                mStates.add(p.inspect());
+            }
+
             for (int i = 0; i < promises.size(); i++) {
                 final int pos = i;
                 final Promise<V> p = promises.get(pos);
-                mStates.add(p.inspect());
 
                 p.then(new Promise.OnFulfilledCallback<V, Void>() {
                     @Override
