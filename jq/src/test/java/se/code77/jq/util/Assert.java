@@ -15,7 +15,7 @@ public class Assert extends org.junit.Assert {
         assertFalse(p.isCancelled());
         assertFalse(p.isDone());
         Promise.StateSnapshot<T> snapshot = p.inspect();
-        assertSame(snapshot.state, Promise.State.PENDING);
+        assertSame(Promise.State.PENDING, snapshot.state);
         assertNull(snapshot.value);
         assertNull(snapshot.reason);
     }
@@ -27,8 +27,8 @@ public class Assert extends org.junit.Assert {
         assertFalse(p.isCancelled());
         assertTrue(p.isDone());
         Promise.StateSnapshot<T> snapshot = p.inspect();
-        assertSame(snapshot.state, Promise.State.FULFILLED);
-        assertEquals(snapshot.value, expected);
+        assertSame(Promise.State.FULFILLED, snapshot.state);
+        assertEquals(expected, snapshot.value);
         assertNull(snapshot.reason);
     }
 
@@ -39,12 +39,12 @@ public class Assert extends org.junit.Assert {
         assertFalse(p.isCancelled());
         assertTrue(p.isDone());
         Promise.StateSnapshot<?> snapshot = p.inspect();
-        assertSame(snapshot.state, Promise.State.REJECTED);
+        assertSame(Promise.State.REJECTED, snapshot.state);
         assertNull(snapshot.value);
     }
     public static void assertRejected(Promise<?> p, Exception reason) {
         assertRejected(p);
-        assertSame(p.inspect().reason, reason);
+        assertSame(reason, p.inspect().reason);
     }
 
     public static void assertRejected(Promise<?> p, Class<? extends Exception> reasonClass) {

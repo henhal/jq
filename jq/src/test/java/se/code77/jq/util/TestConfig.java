@@ -2,9 +2,9 @@ package se.code77.jq.util;
 
 import java.util.PriorityQueue;
 
-import se.code77.jq.Promise;
 import se.code77.jq.Promise.UnhandledRejectionException;
 import se.code77.jq.config.Config;
+import se.code77.jq.config.Config.LogLevel;
 
 public class TestConfig {
     private static TestThread sTestThread;
@@ -18,7 +18,7 @@ public class TestConfig {
             sTestThread = new TestThread("Async event thread");
             sTestThread.start();
 
-            Config.setConfig(new Config(true) {
+            Config.setConfig(new Config(false) {
                 @Override
                 public Dispatcher createDispatcher() {
                     return new TestDispatcher(sTestThread);
@@ -26,33 +26,7 @@ public class TestConfig {
 
                 @Override
                 public Logger getLogger() {
-                    return new Logger() {
-                        private void log(String level, String s) {
-                            System.out.println(System.currentTimeMillis() + " [PROMISE." + level + "] "
-                                    + s);
-                        }
-
-                        @Override
-                        public void debug(String s) {
-                            log("debug", s);
-                        }
-
-                        @Override
-                        public void info(String s) {
-                            log("info", s);
-                        }
-
-                        @Override
-                        public void warn(String s) {
-                            log("warn", s);
-                        }
-
-                        @Override
-                        public void error(String s) {
-                            log("error", s);
-                        }
-
-                    };
+                    return new TestLogger(LogLevel.DEBUG);
                 }
             });
         }
@@ -60,8 +34,20 @@ public class TestConfig {
 
     public static synchronized void stop() {
         if (sTestThread != null) {
-            sTestThread.exit();
+            try {
+                sTestThread.waitForIdle();
+                sTestThread.exit();
+                sTestThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             sTestThread = null;
+        }
+    }
+
+    public static synchronized void waitForIdle() throws InterruptedException {
+        if (sTestThread != null) {
+            sTestThread.waitForIdle();
         }
     }
 
@@ -111,11 +97,15 @@ public class TestConfig {
 
         private final PriorityQueue<Event> mEvents = new PriorityQueue<Event>();
         private boolean mStopped;
+        private boolean mIdle = true;
+        private final Object mIdleLock = new Object();
         private UnhandledRejectionException mUnhandledException;
 
         private synchronized Event getEvent() throws InterruptedException {
             while (!Thread.interrupted()) {
                 Event e = mEvents.peek();
+
+                setIdle(e == null);
 
                 if (e == null) {
                     wait();
@@ -161,11 +151,81 @@ public class TestConfig {
 
         public synchronized void addEvent(Runnable r, long ms) {
             mEvents.add(new Event(r, System.currentTimeMillis() + ms));
-            notify();
+            notifyAll();
+        }
+
+        private void setIdle(boolean idle) {
+            synchronized (mIdleLock) {
+                mIdle = idle;
+                mIdleLock.notifyAll();
+            }
+        }
+
+        public void waitForIdle() throws InterruptedException {
+            waitForIdle(100);
+        }
+
+        public void waitForIdle(long margin) throws InterruptedException {
+            if (mStopped) {
+                return;
+            }
+            synchronized (mIdleLock) {
+                do {
+                    while (!mIdle) {
+                        mIdleLock.wait();
+                    }
+                    Thread.sleep(margin);
+                } while (!mIdle);
+            }
         }
 
         public UnhandledRejectionException getUnhandledException() {
             return mUnhandledException;
         }
+    }
+
+    private static class TestLogger implements Config.Logger {
+        private final LogLevel mLogLevel;
+
+        public TestLogger(LogLevel logLevel) {
+            mLogLevel = logLevel;
+        }
+
+        private boolean hasLevel(LogLevel level) {
+            return mLogLevel.ordinal() <= level.ordinal();
+        }
+
+        private void log(LogLevel level, String s) {
+            if (hasLevel(level)) {
+                System.out.println(System.currentTimeMillis() + " [PROMISE." + level + "] "
+                        + s);
+            }
+        }
+
+        @Override
+        public void verbose(String s) {
+            log(LogLevel.VERBOSE, s);
+        }
+
+        @Override
+        public void debug(String s) {
+            log(LogLevel.DEBUG, s);
+        }
+
+        @Override
+        public void info(String s) {
+            log(LogLevel.INFO, s);
+        }
+
+        @Override
+        public void warn(String s) {
+            log(LogLevel.WARN, s);
+        }
+
+        @Override
+        public void error(String s) {
+            log(LogLevel.ERROR, s);
+        }
+
     }
 }

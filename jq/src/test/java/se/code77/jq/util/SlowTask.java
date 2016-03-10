@@ -4,7 +4,7 @@ import java.util.concurrent.Callable;
 
 public class SlowTask<T> implements Callable<T> {
     private T mValue;
-    private Exception mReason;
+    private Throwable mReason;
     private long mDelayMillis;
 
     public SlowTask(T value) {
@@ -16,11 +16,11 @@ public class SlowTask<T> implements Callable<T> {
         mDelayMillis = delayMillis;
     }
 
-    public SlowTask(Exception reason) {
+    public SlowTask(Throwable reason) {
         this(reason, 1000);
     }
 
-    public SlowTask(Exception reason, long delayMillis) {
+    public SlowTask(Throwable reason, long delayMillis) {
         mReason = reason;
         mDelayMillis = delayMillis;
     }
@@ -28,8 +28,10 @@ public class SlowTask<T> implements Callable<T> {
     @Override
     public T call() throws Exception {
         Thread.sleep(mDelayMillis);
-        if (mReason != null) {
-            throw mReason;
+        if (mReason instanceof Exception) {
+            throw (Exception)mReason;
+        } else if (mReason instanceof Error) {
+            throw (Error)mReason;
         } else {
             return mValue;
         }
