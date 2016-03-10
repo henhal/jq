@@ -125,6 +125,24 @@ public interface Promise<V> extends Future<V> {
         }
 
         @Override
+        public int hashCode() {
+            return state.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof StateSnapshot) {
+                StateSnapshot that = (StateSnapshot)o;
+
+                return state.equals(that.state) &&
+                        (value == null ? that.value == null : value.equals(that.value)) &&
+                        (reason == null ? that.reason == null : reason.equals(that.reason));
+            }
+
+            return false;
+        }
+
+        @Override
         public String toString() {
             switch (state) {
                 case FULFILLED:
