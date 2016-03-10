@@ -42,6 +42,12 @@ public abstract class Config {
          * Print a debug log
          * @param s log text
          */
+        void verbose(String s);
+
+        /**
+         * Print a debug log
+         * @param s log text
+         */
         void debug(String s);
 
         /**
@@ -64,6 +70,7 @@ public abstract class Config {
     }
 
     public enum LogLevel {
+        VERBOSE,
         DEBUG,
         INFO,
         WARN,
