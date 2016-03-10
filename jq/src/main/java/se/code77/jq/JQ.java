@@ -298,10 +298,9 @@ public final class JQ {
                             throw (Exception) cause;
                         } else {
                             // Promises can only rejected with
-                            // Exceptions, not
-                            // any Throwable. Simply wrap it.
-                            throw new Exception("Future threw a Throwable",
-                                    cause);
+                            // Exceptions, not any Throwable.
+                            // Simply throw the ExecutionException.
+                            throw e;
                         }
                     }
 
