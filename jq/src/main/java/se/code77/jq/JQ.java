@@ -298,10 +298,9 @@ public final class JQ {
                             throw (Exception) cause;
                         } else {
                             // Promises can only rejected with
-                            // Exceptions, not
-                            // any Throwable. Simply wrap it.
-                            throw new Exception("Future threw a Throwable",
-                                    cause);
+                            // Exceptions, not any Throwable.
+                            // Simply throw the ExecutionException.
+                            throw e;
                         }
                     }
 
@@ -588,10 +587,13 @@ public final class JQ {
             mFulfilledCount = 0;
             mRejectedCount = 0;
 
+            for (Promise<V> p : promises) {
+                mStates.add(p.inspect());
+            }
+
             for (int i = 0; i < promises.size(); i++) {
                 final int pos = i;
                 final Promise<V> p = promises.get(pos);
-                mStates.add(p.inspect());
 
                 p.then(new Promise.OnFulfilledCallback<V, Void>() {
                     @Override

@@ -53,6 +53,13 @@ public class AndroidConfig extends Config {
         }
 
         @Override
+        public void verbose(String s) {
+            if (hasLevel(LogLevel.VERBOSE)) {
+                Log.v(LOG_TAG, s);
+            }
+        }
+
+        @Override
         public void debug(String s) {
             if (hasLevel(LogLevel.DEBUG)) {
                 Log.d(LOG_TAG, s);

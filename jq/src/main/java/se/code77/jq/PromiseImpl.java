@@ -246,7 +246,7 @@ class PromiseImpl<V> implements Promise<V> {
         ensurePending();
 
         mState = new StateSnapshot<>(State.FULFILLED, value, null);
-        debug("fulfilled with value '" + value + "'");
+        info("fulfilled with value '" + value + "'");
         notify();
         handleCompletion();
     }
@@ -255,7 +255,7 @@ class PromiseImpl<V> implements Promise<V> {
         ensurePending();
 
         mState = new StateSnapshot<>(State.REJECTED, null, reason);
-        debug("rejected with reason '" + reason + "'");
+        info("rejected with reason '" + reason + "'");
         notify();
         handleCompletion();
     }
@@ -316,23 +316,30 @@ class PromiseImpl<V> implements Promise<V> {
                 try {
                     Future<?> nextValue;
 
+                    debug("[" + mState + "]: Handling link " + link);
+
                     if (isRejected()) {
                         if (link.onRejectedCallback != null) {
                             nextValue = link.onRejectedCallback.onRejected(mState.reason);
+                            verbose("Link.onRejected returned " + nextValue);
                         } else {
+                            verbose("Link has no onRejected, forward to next promise");
                             link.nextPromise._reject(mState.reason);
                             return;
                         }
                     } else {
                         if (link.onFulfilledCallback != null) {
                             nextValue = link.onFulfilledCallback.onFulfilled(mState.value);
+                            verbose("Link.onFulfilled returned " + nextValue);
                         } else {
+                            verbose("Link has no onFulfilled, forward to next promise");
                             link.nextPromise._resolve(mState.value);
                             return;
                         }
                     }
 
                     if (nextValue != null) {
+                        verbose("Link returned future, next promise will inherit");
                         JQ.wrap(nextValue).then(new OnFulfilledCallback() {
                             @Override
                             public Future onFulfilled(Object value) throws Exception {
@@ -347,6 +354,7 @@ class PromiseImpl<V> implements Promise<V> {
                             }
                         }).done();
                     } else {
+                        verbose("Link returned null, next promise will resolve directly");
                         link.nextPromise._resolve(null);
                     }
                 } catch (UnhandledRejectionException e) {
@@ -354,7 +362,7 @@ class PromiseImpl<V> implements Promise<V> {
                 } catch (Exception reason) {
                     StringWriter sw = new StringWriter();
                     reason.printStackTrace(new PrintWriter(sw));
-                    debug("Promise rejected from callback: " + sw.toString());
+                    info("Promise rejected from callback: " + sw.toString());
 
                     link.nextPromise._reject(reason);
                 }
@@ -374,8 +382,16 @@ class PromiseImpl<V> implements Promise<V> {
         return "Promise@" + Integer.toHexString(hashCode()) + ": ";
     }
 
+    private void verbose(String s) {
+        getLogger().verbose(getLogPrefix() + s);
+    }
+
     private void debug(String s) {
         getLogger().debug(getLogPrefix() + s);
+    }
+
+    private void info(String s) {
+        getLogger().info(getLogPrefix() + s);
     }
 
     private void warn(String s) {
