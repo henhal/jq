@@ -29,15 +29,15 @@ JQ is published on [Bintray/jCenter](https://bintray.com/code77/maven/jq) and ma
 
 ##### Jars 
 
-* [jq-1.0.3-debug.jar](http://code77se.github.io/jq/bin/1.0.3/jq-1.0.3-debug.jar)
-* [jq-1.0.3-release.jar](http://code77se.github.io/jq/bin/1.0.3/jq-1.0.3-release.jar)
+* [jq-1.0.4-debug.jar](http://code77se.github.io/jq/bin/1.0.4/jq-1.0.4-debug.jar)
+* [jq-1.0.4-release.jar](http://code77se.github.io/jq/bin/1.0.4/jq-1.0.4-release.jar)
 
 ##### Maven
 ```xml
 <dependency>
    <groupId>se.code77.jq</groupId>
    <artifactId>jq</artifactId>
-   <version>[1.0.3,)</version>
+   <version>[1.0.4,)</version>
 </dependency>
 ```
 
