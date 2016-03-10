@@ -98,6 +98,21 @@ public final class JQ {
         public void handle(Deferred<V> deferred);
     }
 
+    /**
+     * Convenience for the case where you want to transform a promised value to void, i.e.,
+     * ((Void)null), for example if an operation you need to wait upon returns a promise for a
+     * String but you simply want to return an empty promise used for observing when the complete
+     * operation is complete.
+     *
+     * @param <V> Type of the promise you want to convert to an empty (value) value.
+     */
+    public static final class OnFulfilledVoidCallback<V> implements OnFulfilledCallback<V, Void> {
+        @Override
+        public Future<Void> onFulfilled(V value) {
+            return null;
+        }
+    }
+
     private JQ() {
     }
 
