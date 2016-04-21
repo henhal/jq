@@ -311,14 +311,15 @@ public final class JQ {
 
     /**
      * Create a pre-rejected promise for the given exception
-     * 
+     *
+     * @param <T> Type of the value to be carried by the return promise
      * @param reason Exception to reject the promise with
      * @return A new promise
      */
-    public static Promise<Void> reject(final Exception reason) {
-        return defer(new DeferredHandler<Void>() {
+    public static <T> Promise<T> reject(final Exception reason) {
+        return defer(new DeferredHandler<T>() {
             @Override
-            public void handle(Deferred<Void> deferred) {
+            public void handle(Deferred<T> deferred) {
                 deferred.reject(reason);
             }
         });
