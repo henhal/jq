@@ -80,6 +80,18 @@ public interface Promise<V> extends Future<V> {
     }
 
     /**
+     * Callback interface for promise progress
+     */
+    public interface OnProgressedCallback {
+        /**
+         * The promise on which this callback was registered has progressed
+         *
+         * @param progress Progress
+         */
+        void onProgressed(float progress);
+    }
+
+    /**
      * State of a promise. All promises will initially be {@link State#PENDING}
      * and may change into {@link State#FULFILLED} or {@link State#REJECTED}
      * only once.
@@ -185,6 +197,32 @@ public interface Promise<V> extends Future<V> {
 
     /**
      * Observe the state of this promise by adding callbacks which will be
+     * called when the promise is resolved, rejected or progresses. This method will return
+     * a new promise which will be chained to this promise, so that any value
+     * returned from or exception thrown by any of the invoked callbacks will be
+     * carried over to the new promise. This means that callbacks may be chained
+     * such as p.then(...).then(...).then(...).fail(...) etc. The supplied
+     * callbacks will be invoked on the thread from which this method is called.
+     * If the promise is already completed when this method is called, the
+     * relevant callback (onFulfilled or onRejected) will be dispatched for
+     * immediate execution in a future event loop turn, but will never be
+     * inlined. Similarly, if progress is previously notified when this method is
+     * called, the onProgressed callback will be dispatched for immediate execution.
+     * Note that this method MUST be run on a thread implementing an event loop.
+     *
+     * @param <NV> Type of the value returned by the callback handlers
+     * @param onFulfilled Fulfillment handler
+     * @param onRejected Rejection handler
+     * @param onProgressed Progress handler
+     * @return A new promise that will be resolved with the value
+     *         returned/rejected with the reason thrown from any of the callback
+     *         handlers.
+     */
+    public <NV> Promise<NV> then(
+            OnFulfilledCallback<V, NV> onFulfilled, OnRejectedCallback<NV> onRejected, OnProgressedCallback onProgressed);
+
+    /**
+     * Observe the state of this promise by adding callbacks which will be
      * called when the promise is resolved or rejected. This method will return
      * a new promise which will be chained to this promise, so that any value
      * returned from or exception thrown by any of the invoked callbacks will be
@@ -238,6 +276,20 @@ public interface Promise<V> extends Future<V> {
      *         callback handler.
      */
     public <NV> Promise<NV> fail(OnRejectedCallback<NV> onRejected);
+
+    /**
+     * Observe the progress of this promise by adding a progress callback which
+     * will be called whenever progress of the promise is notified. This is the same
+     * as calling {@link #then(OnFulfilledCallback, OnRejectedCallback, OnProgressedCallback)}
+     * with null as the onFulfilled and onRejected arguments.
+     * Note that this method MUST be run on a thread implementing an event loop.
+     *
+     * @see #then(OnFulfilledCallback, OnRejectedCallback, OnProgressedCallback)
+     *
+     * @param onProgressed Progress handler
+     * @return A new promise that will inherit the state of this promise.
+     */
+    public Promise<V> progress(OnProgressedCallback onProgressed);
 
     /**
      * Adds the supplied callback handlers, just like calling

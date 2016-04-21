@@ -77,6 +77,14 @@ public final class JQ {
         public void reject(Exception reason) {
             ((PromiseImpl<V>) promise)._reject(reason);
         }
+
+        /**
+         * Notify progress of the promise
+         * @param progress
+         */
+        public void notify(float progress) {
+            ((PromiseImpl<V>) promise)._notify(progress);
+        }
     }
 
     /**
