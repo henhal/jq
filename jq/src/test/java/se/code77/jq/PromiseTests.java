@@ -395,7 +395,7 @@ public class PromiseTests extends AsyncTests {
     @Test
     public void delay_isRejected() throws InterruptedException {
         // new promise is rejected immediately
-        Promise<Void> p = JQ.reject(TEST_REASON1).delay(1000);
+        Promise<Void> p = JQ.<Void>reject(TEST_REASON1).delay(1000);
 
         Thread.sleep(500);
         assertRejected(p, TEST_REASON1);
