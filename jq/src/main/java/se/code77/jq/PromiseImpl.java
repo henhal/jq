@@ -247,7 +247,7 @@ class PromiseImpl<V> implements Promise<V> {
 
         mState = new StateSnapshot<>(State.FULFILLED, value, null);
         info("fulfilled with value '" + value + "'");
-        notify();
+        notifyAll();
         handleCompletion();
     }
 
@@ -256,7 +256,7 @@ class PromiseImpl<V> implements Promise<V> {
 
         mState = new StateSnapshot<>(State.REJECTED, null, reason);
         info("rejected with reason '" + reason + "'");
-        notify();
+        notifyAll();
         handleCompletion();
     }
 
