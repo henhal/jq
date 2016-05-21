@@ -7,24 +7,22 @@ import android.os.Looper;
 import android.util.Log;
 
 public class AndroidConfig extends Config {
+    private final AndroidDispatcher mDefaultDispatcher;
+
     public AndroidConfig(boolean monitorUnterminated) {
-        super(monitorUnterminated);
+        this(monitorUnterminated, LogLevel.WARN);
     }
 
     public AndroidConfig(boolean monitorUnterminated, LogLevel logLevel) {
         super(monitorUnterminated, logLevel);
+
+        mDefaultDispatcher = new AndroidDispatcher(Looper.getMainLooper());
     }
 
     public static class AndroidDispatcher implements Dispatcher {
         protected final Handler mHandler;
 
-        public AndroidDispatcher() {
-            Looper looper = Looper.myLooper();
-
-            if (looper == null) {
-                looper = Looper.getMainLooper();
-            }
-
+        public AndroidDispatcher(Looper looper) {
             mHandler = new Handler(looper);
         }
 
@@ -90,7 +88,9 @@ public class AndroidConfig extends Config {
 
     @Override
     public Dispatcher createDispatcher() {
-        return new AndroidDispatcher();
+        Dispatcher d = mDispatchers.get(Thread.currentThread());
+
+        return d != null ? d : mDefaultDispatcher;
     }
 
     @Override
