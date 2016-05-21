@@ -7,8 +7,6 @@ import android.os.Looper;
 import android.util.Log;
 
 public class AndroidConfig extends Config {
-    private final AndroidDispatcher mDefaultDispatcher;
-
     public AndroidConfig(boolean monitorUnterminated) {
         this(monitorUnterminated, LogLevel.WARN);
     }
@@ -16,7 +14,9 @@ public class AndroidConfig extends Config {
     public AndroidConfig(boolean monitorUnterminated, LogLevel logLevel) {
         super(monitorUnterminated, logLevel);
 
-        mDefaultDispatcher = new AndroidDispatcher(Looper.getMainLooper());
+        Looper mainLooper = Looper.getMainLooper();
+
+        registerDispatcher(mainLooper.getThread(), new AndroidDispatcher(mainLooper));
     }
 
     public static class AndroidDispatcher implements Dispatcher {
@@ -88,9 +88,9 @@ public class AndroidConfig extends Config {
 
     @Override
     public Dispatcher createDispatcher() {
-        Dispatcher d = mDispatchers.get(Thread.currentThread());
+        Dispatcher d = super.createDispatcher();
 
-        return d != null ? d : mDefaultDispatcher;
+        return d != null ? d : mDispatchers.get(Looper.getMainLooper().getThread());
     }
 
     @Override

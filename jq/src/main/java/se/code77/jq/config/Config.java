@@ -150,7 +150,9 @@ public abstract class Config {
      * error).
      * @return Dispatcher
      */
-    public abstract Dispatcher createDispatcher();
+    public Dispatcher createDispatcher() {
+        return mDispatchers.get(Thread.currentThread());
+    }
 
     /**
      * Get a logger
@@ -164,9 +166,34 @@ public abstract class Config {
      * behavior may differ for various Config implementations.
      * @param thread Thread
      * @param dispatcher Dispatcher
+     *
+     * @return Config instance (for chaining)
      */
-    public void registerDispatcher(Thread thread, Dispatcher dispatcher) {
+    public Config registerDispatcher(Thread thread, Dispatcher dispatcher) {
         mDispatchers.put(thread, dispatcher);
+
+        return this;
     }
 
+    /**
+     * Unregister the (previously registered) dispatcher for the given thread
+     * @param thread Thread
+     *
+     * @return Config instance (for chaining)
+     */
+    public Config unregisterDispatcher(Thread thread) {
+        mDispatchers.remove(thread);
+
+        return this;
+    }
+
+    /**
+     * Check if the given thread is registered as a dispatcher thread using
+     * #registerDispatcher(Thread, Dispatcher)
+     * @param thread Thread
+     * @return true if thread is registered as dispatcher thread
+     */
+    public boolean isDispatcherThread(Thread thread) {
+        return mDispatchers.containsKey(thread);
+    }
 }
