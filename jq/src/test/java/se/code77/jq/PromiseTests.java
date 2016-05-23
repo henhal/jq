@@ -10,8 +10,6 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static se.code77.jq.util.Assert.*;
-
 import se.code77.jq.JQ.Deferred;
 import se.code77.jq.Promise.OnFulfilledCallback;
 import se.code77.jq.Promise.UnhandledRejectionException;
@@ -21,6 +19,8 @@ import se.code77.jq.util.DataFulfilledCallback;
 import se.code77.jq.util.DataRejectedCallback;
 import se.code77.jq.util.SlowTask;
 import se.code77.jq.util.TestConfig;
+
+import static se.code77.jq.util.Assert.*;
 
 public class PromiseTests extends AsyncTests {
 

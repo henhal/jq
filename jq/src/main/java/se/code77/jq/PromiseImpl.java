@@ -182,6 +182,8 @@ class PromiseImpl<V> implements Promise<V> {
 
     @Override
     public synchronized V get() throws InterruptedException, ExecutionException {
+        warnBlocking();
+
         while (isPending()) {
             wait();
         }
@@ -197,6 +199,8 @@ class PromiseImpl<V> implements Promise<V> {
     public synchronized V get(long timeout, TimeUnit unit) throws InterruptedException,
             ExecutionException,
             TimeoutException {
+        warnBlocking();
+
         long now = System.currentTimeMillis();
         long expires = now + unit.toMillis(timeout);
 
@@ -232,6 +236,12 @@ class PromiseImpl<V> implements Promise<V> {
     @Override
     public String toString() {
         return getLogPrefix() + mState.toString() + (mTerminate ? ", TERMINATE" : "");
+    }
+
+    private void warnBlocking() {
+        if (Config.getConfig().isDispatcherThread(Thread.currentThread())) {
+            warn("Calling blocking method on dispatcher thread may cause deadlock.");
+        }
     }
 
     private void ensurePending() {
