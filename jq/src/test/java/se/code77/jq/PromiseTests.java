@@ -170,6 +170,32 @@ public class PromiseTests extends AsyncTests {
     }
 
     @Test
+    public void deferred_isResolvedWithResolvedPromise() throws Exception {
+        final Deferred<Integer> deferred = JQ.defer();
+        Promise<Integer> p = deferred.promise;
+        Promise<Integer> p2 = JQ.defer(new SlowTask<>(42, 500));
+
+        deferred.resolve(p2);
+        assertPending(p);
+
+        Thread.sleep(1000);
+        assertResolved(p, 42);
+    }
+
+    @Test
+    public void deferred_isResolvedWithRejectedPromise() throws Exception {
+        final Deferred<Integer> deferred = JQ.defer();
+        Promise<Integer> p = deferred.promise;
+        Promise<Integer> p2 = JQ.defer(new SlowTask<Integer>(TEST_REASON1, 500));
+
+        deferred.resolve(p2);
+        assertPending(p);
+
+        Thread.sleep(1000);
+        assertRejected(p, TEST_REASON1);
+    }
+
+    @Test
     public void cancel_isNotSupported() {
         final Deferred<String> deferred = JQ.defer();
         Promise<String> p = deferred.promise;
