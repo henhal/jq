@@ -244,16 +244,11 @@ class PromiseImpl<V> implements Promise<V> {
         }
     }
 
-    private void ensurePending() {
-        if (isFulfilled()) {
-            throw new IllegalStateException("Promise already fulfilled");
-        } else if (isRejected()) {
-            throw new IllegalStateException("Promise already rejected");
-        }
-    }
-
     synchronized void _resolve(V value) {
-        ensurePending();
+        if (!isPending()) {
+            warn("Resolving non-pending promise is a no-op, ignoring");
+            return;
+        }
 
         mState = new StateSnapshot<>(State.FULFILLED, value, null);
         info("fulfilled with value '" + value + "'");
@@ -262,7 +257,10 @@ class PromiseImpl<V> implements Promise<V> {
     }
 
     synchronized void _reject(Exception reason) {
-        ensurePending();
+        if (!isPending()) {
+            warn("Rejecting non-pending promise is a no-op, ignoring");
+            return;
+        }
 
         mState = new StateSnapshot<>(State.REJECTED, null, reason);
         info("rejected with reason '" + reason + "'");

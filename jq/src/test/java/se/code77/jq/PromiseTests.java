@@ -128,21 +128,11 @@ public class PromiseTests extends AsyncTests {
 
         deferred.resolve(TEST_VALUE1);
 
-        assertThrows(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                deferred.resolve(TEST_VALUE2);
-                return null;
-            }
-        }, IllegalStateException.class);
+        deferred.resolve(TEST_VALUE2);
+        assertResolved(p, TEST_VALUE1);
 
-        assertThrows(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                deferred.reject(TEST_REASON1);
-                return null;
-            }
-        }, IllegalStateException.class);
+        deferred.reject(TEST_REASON1);
+        assertResolved(p, TEST_VALUE1);
     }
 
     @Test
@@ -152,21 +142,11 @@ public class PromiseTests extends AsyncTests {
 
         deferred.reject(TEST_REASON1);
 
-        assertThrows(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                deferred.reject(TEST_REASON2);
-                return null;
-            }
-        }, IllegalStateException.class);
+        deferred.reject(TEST_REASON2);
+        assertRejected(p, TEST_REASON1);
 
-        assertThrows(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                deferred.resolve(TEST_VALUE1);
-                return null;
-            }
-        }, IllegalStateException.class);
+        deferred.resolve(TEST_VALUE1);
+        assertRejected(p, TEST_REASON1);
     }
 
     @Test
