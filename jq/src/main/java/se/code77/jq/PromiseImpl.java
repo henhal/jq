@@ -87,12 +87,11 @@ class PromiseImpl<V> implements Promise<V> {
 
     @Override
     public <NV> Promise<NV> spread(final OnFulfilledSpreadCallback<V, NV> onFulfilled, OnRejectedCallback<NV> onRejected) {
-        final Method m = getOnFulfilledMethod(onFulfilled);
-
         return then(new OnFulfilledCallback<V, NV>() {
             @Override
             public Future<NV> onFulfilled(V value) throws Exception {
-                Object[] args = new Object[m.getParameterTypes().length];
+                final Method m = getOnFulfilledMethod(onFulfilled);
+                final Object[] args = new Object[m.getParameterTypes().length];
 
                 if (value instanceof List) {
                     List<?> values = (List<?>) value;
@@ -104,7 +103,17 @@ class PromiseImpl<V> implements Promise<V> {
                     throw new IllegalArgumentException("Resolved value for spread callback is not a List");
                 }
 
-                return (Future<NV>) m.invoke(onFulfilled, args);
+                try {
+                    return (Future<NV>) m.invoke(onFulfilled, args);
+                } catch (InvocationTargetException ite) {
+                    Throwable e = ite.getTargetException();
+
+                    if (e instanceof Exception) {
+                        throw (Exception)e;
+                    } else {
+                        throw (Error)e;
+                    }
+                }
             }
         }, onRejected);
     }
