@@ -100,7 +100,7 @@ class PromiseImpl<V> implements Promise<V> {
                         args[i] = values.get(i);
                     }
                 } else if (value != null) {
-                    throw new IllegalArgumentException("Resolved value for spread callback is not a List");
+                    throw new IllegalSpreadCallbackException("Resolved value for spread callback is not a List");
                 }
 
                 try {
@@ -113,6 +113,8 @@ class PromiseImpl<V> implements Promise<V> {
                     } else {
                         throw (Error)e;
                     }
+                } catch (Exception e) {
+                    throw new IllegalSpreadCallbackException("Could not invoke spread callback", e);
                 }
             }
         }, onRejected);
@@ -424,7 +426,7 @@ class PromiseImpl<V> implements Promise<V> {
             }
         }
 
-        throw new IllegalArgumentException("No valid callback for spread");
+        throw new IllegalSpreadCallbackException("Spread callback has no valid onFulfilled method");
     }
 
     private Dispatcher getDispatcher() {

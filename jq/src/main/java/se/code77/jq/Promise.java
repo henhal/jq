@@ -60,6 +60,16 @@ public interface Promise<V> extends Future<V> {
         public Future<NV> onFulfilled(E e1, E e2, E e3, E e4, E e5) throws Exception;
     }
 
+    public static final class IllegalSpreadCallbackException extends Exception {
+        public IllegalSpreadCallbackException(String message) {
+            super(message);
+        }
+
+        public IllegalSpreadCallbackException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
     /**
      * Callback interface for rejected promises.
      * 
