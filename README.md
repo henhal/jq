@@ -172,6 +172,21 @@ private Promise<Boolean> someFuzzyCheck() {
   });
 }
 
+// Synchronize multiple parallel operations using all and spread
+private Promise<Boolean> someFuzzyCheck() {
+  // Assuming getFirstValue et. al. all return promises for the same type, e.g. Promise<String>,
+  // we can run them in parallel and use JQ.all to wait until all values are available. The
+  // resulting promise will be resolved with a List<String>.
+  // This is the same as the previous example but we use spread to automatically assign the elements
+  // of the resolved list to individual arguments.
+  return JQ.all(getFirstValue(), getSecondValue(), getThirdValue()).spread(first, second, third -> {
+
+    // Return some result that depends on all calculated values
+    return Value.wrap(first.equals(second) || first.equals(third));
+  });
+}
+
+
 // Run two operations in parallel, resolving the promise with the result of the operation that finishes first.
 // The resulting promise will be rejected only if all operations fails.
 private Promise<String> getStuff() {
