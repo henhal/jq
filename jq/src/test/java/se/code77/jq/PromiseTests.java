@@ -2,6 +2,8 @@ package se.code77.jq;
 
 import org.junit.Test;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -519,6 +521,149 @@ public class PromiseTests extends AsyncTests {
         assertPending(p3);
         Thread.sleep(1000);
         assertResolved(p3, TEST_VALUE1);
+    }
+
+    @Test
+    public void spread_2() {
+        final Promise<List<String>> p = JQ.all(JQ.resolve(TEST_VALUE1), JQ.resolve(TEST_VALUE2));
+        final BlockingDataHolder<String> spread = new BlockingDataHolder<>();
+
+        p.spread(new Promise.OnFulfilledSpreadCallback2<String, Void>() {
+            @Override
+            public Future<Void> onFulfilled(String e1, String e2) throws Exception {
+                assertEquals(TEST_VALUE1, e1);
+                assertEquals(TEST_VALUE2, e2);
+                spread.set();
+                return null;
+            }
+        });
+
+        assertData(spread, 500);
+    }
+
+    @Test
+    public void spread_3() {
+        final Promise<List<String>> p = JQ.all(JQ.resolve(TEST_VALUE1), JQ.resolve(TEST_VALUE2), JQ.resolve(TEST_VALUE3));
+        final BlockingDataHolder<String> spread = new BlockingDataHolder<>();
+
+        p.spread(new Promise.OnFulfilledSpreadCallback3<String, Void>() {
+            @Override
+            public Future<Void> onFulfilled(String e1, String e2, String e3) throws Exception {
+                assertEquals(TEST_VALUE1, e1);
+                assertEquals(TEST_VALUE2, e2);
+                assertEquals(TEST_VALUE3, e3);
+                spread.set();
+                return null;
+            }
+        });
+
+        assertData(spread, 500);
+    }
+
+    @Test
+    public void spread_2_to_3() {
+        final Promise<List<String>> p = JQ.all(JQ.resolve(TEST_VALUE1), JQ.resolve(TEST_VALUE2));
+        final BlockingDataHolder<String> spread = new BlockingDataHolder<>();
+
+        p.spread(new Promise.OnFulfilledSpreadCallback3<String, Void>() {
+            @Override
+            public Future<Void> onFulfilled(String e1, String e2, String e3) throws Exception {
+                assertEquals(TEST_VALUE1, e1);
+                assertEquals(TEST_VALUE2, e2);
+                assertEquals(null, e3);
+                spread.set();
+                return null;
+            }
+        });
+
+        assertData(spread, 500);
+    }
+
+    @Test
+    public void spread_3_to_2() {
+        final Promise<List<String>> p = JQ.all(JQ.resolve(TEST_VALUE1), JQ.resolve(TEST_VALUE2), JQ.resolve(TEST_VALUE3));
+        final BlockingDataHolder<String> spread = new BlockingDataHolder<>();
+
+        p.spread(new Promise.OnFulfilledSpreadCallback2<String, Void>() {
+            @Override
+            public Future<Void> onFulfilled(String e1, String e2) throws Exception {
+                assertEquals(TEST_VALUE1, e1);
+                assertEquals(TEST_VALUE2, e2);
+                spread.set();
+                return null;
+            }
+        });
+
+        assertData(spread, 500);
+    }
+
+    @Test
+    public void spread_resolved() throws InterruptedException {
+        final Promise<List<String>> p = JQ.all(JQ.resolve(TEST_VALUE1), JQ.resolve(TEST_VALUE2), JQ.resolve(TEST_VALUE3));
+        final BlockingDataHolder<String> spread = new BlockingDataHolder<>();
+
+        final Promise<Integer> p2 = p.spread(new Promise.OnFulfilledSpreadCallback2<String, Integer>() {
+            @Override
+            public Future<Integer> onFulfilled(String e1, String e2) throws Exception {
+                spread.set();
+                return Value.wrap(42);
+            }
+        });
+
+        assertData(spread, 500);
+        Thread.sleep(500);
+        assertResolved(p2, 42);
+    }
+
+    @Test
+    public void spread_rejected() throws InterruptedException {
+        final Promise<List<String>> p = JQ.all(JQ.resolve(TEST_VALUE1), JQ.resolve(TEST_VALUE2));
+
+        final Promise<Void> p2 = p.spread(new Promise.OnFulfilledSpreadCallback2<String, Void>() {
+            @Override
+            public Future<Void> onFulfilled(String e1, String e2) throws Exception {
+                throw new IOException();
+            }
+        });
+
+        Thread.sleep(500);
+        assertRejected(p2, IOException.class);
+    }
+
+    @Test
+    public void spread_invalidCallback() throws InterruptedException {
+        final Promise<List<String>> p = JQ.all(JQ.resolve(TEST_VALUE1), JQ.resolve(TEST_VALUE2));
+
+        final Promise<Void> p2 = p.spread(new Promise.OnFulfilledSpreadCallback<List<String>, Void>() {
+        });
+
+        Thread.sleep(500);
+        assertRejected(p2, Promise.IllegalSpreadCallbackException.class);
+    }
+
+    @Test
+    public void spread_nonList() throws InterruptedException {
+        final Promise<String> p = JQ.resolve(TEST_VALUE1);
+
+        final Promise<Void> p2 = p.spread(new Promise.OnFulfilledSpreadCallback<String, Void>() {
+        });
+
+        Thread.sleep(500);
+        assertRejected(p2, Promise.IllegalSpreadCallbackException.class);
+    }
+
+    @Test
+    public void spread_wrongTypes() throws InterruptedException {
+        final Promise<List<String>> p = JQ.all(JQ.resolve(TEST_VALUE1), JQ.resolve(TEST_VALUE2));
+
+        final Promise<Void> p2 = p.spread(new Promise.OnFulfilledSpreadCallback<List<String>, Void>() {
+            public Future<Void> onFulfilled(Integer e1, Integer e2) throws Exception {
+                return null;
+            }
+        });
+
+        Thread.sleep(500);
+        assertRejected(p2, Promise.IllegalSpreadCallbackException.class);
     }
 
 }

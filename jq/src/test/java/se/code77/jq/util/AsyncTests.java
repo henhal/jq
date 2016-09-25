@@ -6,6 +6,7 @@ import org.junit.Before;
 public class AsyncTests {
     protected static final String TEST_VALUE1 = "Hello";
     protected static final String TEST_VALUE2 = "World";
+    protected static final String TEST_VALUE3 = "JQ";
     protected static final Exception TEST_REASON1 = new IllegalArgumentException("foo");
     protected static final Exception TEST_REASON2 = new IllegalArgumentException("bar");
 
