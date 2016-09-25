@@ -37,29 +37,91 @@ public interface Promise<V> extends Future<V> {
         Future<NV> onFulfilled(V value) throws Exception;
     }
 
+    /**
+     * Base interface for #spread(OnFulfilledSpreadCallback).
+     * Sub-interfaces are defined for 1-5 arguments, if more are needed, implement this interface
+     * and implement a Future&lt;NV&gt; onFulfilled method with the desired number of arguments
+     * matching the promised list.
+     *
+     * @param <L> Type of the value resolved by the promise on which this
+     *            callback is registered by calling
+     *            {@link Promise#spread(OnFulfilledSpreadCallback)} or any of its
+     *            overloaded variants. Must be a List.
+     * @param <NV> Type of the value returned by the callback, which will be
+     *            used to resolve the next promise in the chain.
+     *
+     */
     public interface OnFulfilledSpreadCallback<L, NV> {
     }
 
+    /**
+     * Spread callback with 1 argument. Used for spreading the first element of a promised list
+     * to an individual argument.
+     * If the list does not hold sufficient elements the remaining arguments will be null.
+     * @param <E> Type of the elements in the promised list, i.e., if the promise is resolved to a
+     *           List&lt;String&gt; then E is String
+     * @param <NV> Type of the value returned by the callback, which will be
+     *            used to resolve the next promise in the chain.
+     */
     public interface OnFulfilledSpreadCallback1<E, NV> extends OnFulfilledSpreadCallback<List<E>, NV> {
-        public Future<NV> onFulfilled(E e1) throws Exception;
+        Future<NV> onFulfilled(E e1) throws Exception;
     }
 
+    /**
+     * Spread callback with 2 arguments. Used for spreading the 2 first elements of a promised list
+     * to individual arguments.
+     * If the list does not hold sufficient elements the remaining arguments will be null.
+     * @param <E> Type of the elements in the promised list, i.e., if the promise is resolved to a
+     *           List&lt;String&gt; then E is String
+     * @param <NV> Type of the value returned by the callback, which will be
+     *            used to resolve the next promise in the chain.
+     */
     public interface OnFulfilledSpreadCallback2<E, NV> extends OnFulfilledSpreadCallback<List<E>, NV> {
-        public Future<NV> onFulfilled(E e1, E e2) throws Exception;
+        Future<NV> onFulfilled(E e1, E e2) throws Exception;
     }
 
+    /**
+     * Spread callback with 3 arguments. Used for spreading the 3 first elements of a promised list
+     * to individual arguments.
+     * If the list does not hold sufficient elements the remaining arguments will be null.
+     * @param <E> Type of the elements in the promised list, i.e., if the promise is resolved to a
+     *           List&lt;String&gt; then E is String
+     * @param <NV> Type of the value returned by the callback, which will be
+     *            used to resolve the next promise in the chain.
+     */
     public interface OnFulfilledSpreadCallback3<E, NV> extends OnFulfilledSpreadCallback<List<E>, NV> {
-        public Future<NV> onFulfilled(E e1, E e2, E e3) throws Exception;
+        Future<NV> onFulfilled(E e1, E e2, E e3) throws Exception;
     }
 
+    /**
+     * Spread callback with 4 arguments. Used for spreading the 4 first elements of a promised list
+     * to individual arguments.
+     * If the list does not hold sufficient elements the remaining arguments will be null.
+     * @param <E> Type of the elements in the promised list, i.e., if the promise is resolved to a
+     *           List&lt;String&gt; then E is String
+     * @param <NV> Type of the value returned by the callback, which will be
+     *            used to resolve the next promise in the chain.
+     */
     public interface OnFulfilledSpreadCallback4<E, NV> extends OnFulfilledSpreadCallback<List<E>, NV> {
-        public Future<NV> onFulfilled(E e1, E e2, E e3, E e4) throws Exception;
+        Future<NV> onFulfilled(E e1, E e2, E e3, E e4) throws Exception;
     }
 
+    /**
+     * Spread callback with 5 arguments. Used for spreading the 5 first elements of a promised list
+     * to individual arguments.
+     * If the list does not hold sufficient elements the remaining arguments will be null.
+     * @param <E> Type of the elements in the promised list, i.e., if the promise is resolved to a
+     *           List&lt;String&gt; then E is String
+     * @param <NV> Type of the value returned by the callback, which will be
+     *            used to resolve the next promise in the chain.
+     */
     public interface OnFulfilledSpreadCallback5<E, NV> extends OnFulfilledSpreadCallback<List<E>, NV> {
-        public Future<NV> onFulfilled(E e1, E e2, E e3, E e4, E e5) throws Exception;
+        Future<NV> onFulfilled(E e1, E e2, E e3, E e4, E e5) throws Exception;
     }
 
+    /**
+     * Thrown for mismatching callbacks used with {@link Promise#spread(OnFulfilledSpreadCallback)}
+     */
     public static final class IllegalSpreadCallbackException extends Exception {
         public IllegalSpreadCallbackException(String message) {
             super(message);
