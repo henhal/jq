@@ -3,6 +3,7 @@ package se.code77.jq;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -109,9 +110,9 @@ class PromiseImpl<V> implements Promise<V> {
                     Throwable e = ite.getTargetException();
 
                     if (e instanceof Exception) {
-                        throw (Exception)e;
+                        throw (Exception) e;
                     } else {
-                        throw (Error)e;
+                        throw (Error) e;
                     }
                 } catch (Exception e) {
                     throw new IllegalSpreadCallbackException("Could not invoke spread callback", e);
@@ -419,7 +420,7 @@ class PromiseImpl<V> implements Promise<V> {
         });
     }
 
-    private <NV> Method getOnFulfilledMethod(OnFulfilledSpreadCallback<V, NV> onFulfilled) {
+    private <NV> Method getOnFulfilledMethod(OnFulfilledSpreadCallback<V, NV> onFulfilled) throws IllegalSpreadCallbackException {
         for (Method m : onFulfilled.getClass().getMethods()) {
             if (m.getName().equals("onFulfilled") && m.getReturnType().equals(Future.class)) {
                 return m;
