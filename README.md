@@ -1,6 +1,6 @@
 # README #
 
-This is a Java 7 compatible promise implementation aiming to conform to the [Promises/A+](https://promisesaplus.com/) specification to as much extent as possible, with the constraints given by the Java 7 language.
+This is a Java 7 / Android compatible promise implementation aiming to conform to the [Promises/A+](https://promisesaplus.com/) specification to as much extent as possible, with the constraints given by the Java 7 language.
 
 The implementation is heavily influenced by Kris Kowal's [Q](https://github.com/kriskowal/q) JavaScript library.
 
