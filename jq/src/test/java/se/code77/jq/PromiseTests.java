@@ -666,4 +666,40 @@ public class PromiseTests extends AsyncTests {
         assertRejected(p2, Promise.IllegalSpreadCallbackException.class);
     }
 
+    @Test
+    public void spread_emptyList() throws InterruptedException {
+        final Promise<List<String>> p = JQ.all();
+        final BlockingDataHolder<String> spread = new BlockingDataHolder<>();
+
+        p.spread(new Promise.OnFulfilledSpreadCallback2<String, Void>() {
+            @Override
+            public Future<Void> onFulfilled(String e1, String e2) throws Exception {
+                assertNull(e1);
+                assertNull(e2);
+                spread.set();
+                return null;
+            }
+        });
+
+        assertData(spread, 500);
+    }
+
+    @Test
+    public void spread_nullList() throws InterruptedException {
+        final Promise<List<String>> p = JQ.resolve(null);
+        final BlockingDataHolder<String> spread = new BlockingDataHolder<>();
+
+        p.spread(new Promise.OnFulfilledSpreadCallback2<String, Void>() {
+            @Override
+            public Future<Void> onFulfilled(String e1, String e2) throws Exception {
+                assertNull(e1);
+                assertNull(e2);
+                spread.set();
+                return null;
+            }
+        });
+
+        assertData(spread, 500);
+    }
+
 }
