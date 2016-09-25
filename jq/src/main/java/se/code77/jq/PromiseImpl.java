@@ -3,6 +3,8 @@ package se.code77.jq;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -82,6 +84,46 @@ class PromiseImpl<V> implements Promise<V> {
     @Override
     public <NV> Promise<NV> then(OnFulfilledCallback<V, NV> onFulfilled) {
         return then(onFulfilled, null);
+    }
+
+    @Override
+    public <NV> Promise<NV> spread(final OnFulfilledSpreadCallback<V, NV> onFulfilled, OnRejectedCallback<NV> onRejected) {
+        return then(new OnFulfilledCallback<V, NV>() {
+            @Override
+            public Future<NV> onFulfilled(V value) throws Exception {
+                final Method m = getOnFulfilledMethod(onFulfilled);
+                final Object[] args = new Object[m.getParameterTypes().length];
+
+                if (value instanceof List) {
+                    List<?> values = (List<?>) value;
+
+                    for (int i = 0; i < args.length && i < values.size(); i++) {
+                        args[i] = values.get(i);
+                    }
+                } else if (value != null) {
+                    throw new IllegalSpreadCallbackException("Resolved value for spread callback is not a List");
+                }
+
+                try {
+                    return (Future<NV>) m.invoke(onFulfilled, args);
+                } catch (InvocationTargetException ite) {
+                    Throwable e = ite.getTargetException();
+
+                    if (e instanceof Exception) {
+                        throw (Exception) e;
+                    } else {
+                        throw (Error) e;
+                    }
+                } catch (Exception e) {
+                    throw new IllegalSpreadCallbackException("Could not invoke spread callback", e);
+                }
+            }
+        }, onRejected);
+    }
+
+    @Override
+    public <NV> Promise<NV> spread(final OnFulfilledSpreadCallback<V, NV> onFulfilled) {
+        return spread(onFulfilled, null);
     }
 
     @Override
@@ -376,6 +418,16 @@ class PromiseImpl<V> implements Promise<V> {
                 }
             }
         });
+    }
+
+    private <NV> Method getOnFulfilledMethod(OnFulfilledSpreadCallback<V, NV> onFulfilled) throws IllegalSpreadCallbackException {
+        for (Method m : onFulfilled.getClass().getMethods()) {
+            if (m.getName().equals("onFulfilled") && m.getReturnType().equals(Future.class)) {
+                return m;
+            }
+        }
+
+        throw new IllegalSpreadCallbackException("Spread callback has no valid onFulfilled method");
     }
 
     private Dispatcher getDispatcher() {
