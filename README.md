@@ -29,22 +29,22 @@ JQ is published on [Bintray/jCenter](https://bintray.com/code77/maven/jq) and ma
 
 ##### Jars 
 
-* [jq-1.0.5-debug.jar](http://code77se.github.io/jq/bin/1.0.5/jq-1.0.5-debug.jar)
-* [jq-1.0.5-release.jar](http://code77se.github.io/jq/bin/1.0.5/jq-1.0.5-release.jar)
+* [jq-1.1.0-debug.jar](http://code77se.github.io/jq/bin/1.1.0/jq-1.1.0-debug.jar)
+* [jq-1.1.0-release.jar](http://code77se.github.io/jq/bin/1.1.0/jq-1.1.0-release.jar)
 
 ##### Maven
 ```xml
 <dependency>
    <groupId>se.code77.jq</groupId>
    <artifactId>jq</artifactId>
-   <version>[1.0.5,)</version>
+   <version>[1.1.0,)</version>
 </dependency>
 ```
 
 ##### Gradle
 ```groovy
 dependencies {
-    compile 'se.code77.jq:jq:1.0.+'
+    compile 'se.code77.jq:jq:1.1.+'
 }
 ````
 
