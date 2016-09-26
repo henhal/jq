@@ -79,9 +79,8 @@ then(new OnFulfilledCallback({
 Although this looks verbose, most IDEs will assist both with generating the stubs and folding them for increased readability.
 Now on with the examples:
 
+* Calling a method returning a promise and chaining the result to a set of other asynchronous tasks or values, and attach an error handler at the end
 ```
-// Calling a method returning a promise and chaining the result to a set of
-// other asynchronous tasks or values, and attach an error handler at the end
 doSomething().then(x -> {
   // return a promise for some new task
   return doSomethingElse(x);
@@ -102,9 +101,11 @@ doSomething().then(x -> {
 }).fail(err -> {
   // Exception was thrown, do something with it
 }).done();
+```
 
 
-// Wrapping Ion Future
+* Wrapping Ion Future
+```
 return JQ.wrap(Ion.with(mContext).load("http://foobar.com").
                asJsonObject()).then(json -> {
   // Note that Future:s may be returned without wrapping, the library will handle that
@@ -116,8 +117,10 @@ return JQ.wrap(Ion.with(mContext).load("http://foobar.com").
 }).fail(err -> {
   // Error handling
 }).done();
+```
 
-// Creating a promise for a blocking background task and resolving it upon completion
+* Creating a promise for a blocking background task and resolving it upon completion
+```
 private Promise<Integer> doSomething(final String x) {
   return JQ.defer(deferred -> {
     //Manually offload the task to a new thread an resolve/reject the promise appropriately
@@ -131,8 +134,10 @@ private Promise<Integer> doSomething(final String x) {
     }).start();
   });
 }
+```
 
-// Alternative, even simpler, version using a Callable task and letting JQ run the task with a default Executor
+* Alternative, even simpler, version using a Callable task and letting JQ run the task with a default Executor
+```
 private Promise<Integer> doSomethingElse(final String x) {
   return JQ.defer(() -> {
     // Note that this will be run on a worker thread
@@ -143,8 +148,10 @@ private Promise<Integer> doSomethingElse(final String x) {
     }
   });
 }
+```
 
-// Wrap an existing asynchronous callback-based operation in a promise
+* Wrap an existing asynchronous callback-based operation in a promise
+```
 private Promise<String> doYetAnotherThing() {
   return JQ.defer(deferred -> {
     someAsyncOperation((result, value) -> {
@@ -156,12 +163,15 @@ private Promise<String> doYetAnotherThing() {
     });
   });
 }
+```
 
-// Synchronize multiple parallel operations
+* Synchronize multiple parallel operations
+```
 private Promise<Boolean> someFuzzyCheck() {
   // Assuming getFirstValue et. al. all return promises for the same type, e.g. Promise<String>,
   // we can run them in parallel and use JQ.all to wait until all values are available. The
   // resulting promise will be resolved with a List<String>.
+  // If the values have different types, they can be resolved to a common super-type, e.g. Promise<List<Object>>.
   return JQ.all(getFirstValue(), getSecondValue(), getThirdValue()).then(values -> {
     String first = values.get(0);
     String second = values.get(1);
@@ -171,32 +181,26 @@ private Promise<Boolean> someFuzzyCheck() {
     return Value.wrap(first.equals(second) || first.equals(third));
   });
 }
+```
 
-// Synchronize multiple parallel operations using all and spread
+* Synchronize multiple parallel operations using all and spread
+```
 private Promise<Boolean> someFuzzyCheck() {
-  // Assuming getFirstValue et. al. all return promises for the same type, e.g. Promise<String>,
-  // we can run them in parallel and use JQ.all to wait until all values are available. The
-  // resulting promise will be resolved with a List<String>.
   // This is the same as the previous example but we use spread to automatically assign the elements
-  // of the resolved list to individual arguments.
+  // of the resolved list to individual arguments. Note that using spread, the arguments may be of different types.
   return JQ.all(getFirstValue(), getSecondValue(), getThirdValue()).spread(first, second, third -> {
 
     // Return some result that depends on all calculated values
     return Value.wrap(first.equals(second) || first.equals(third));
   });
 }
+```
 
-
-// Run two operations in parallel, resolving the promise with the result of the operation that finishes first.
-// The resulting promise will be rejected only if all operations fails.
+* Run two operations in parallel, resolving the promise with the result of the operation that finishes first. The resulting promise will be rejected only if all operations fails.
+```
 private Promise<String> getStuff() {
   return JQ.any(getValueFromDisk(), getValueFromNetwork());
 }
-
-
-
-
-
 ```
 
 
