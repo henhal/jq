@@ -102,7 +102,7 @@ public final class JQ {
 
         /**
          * Notify progress of the promise
-         * @param progress
+         * @param progress Progress
          */
         public void notify(float progress) {
             ((PromiseImpl<V>) promise)._notify(progress);
