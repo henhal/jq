@@ -18,6 +18,7 @@ import se.code77.jq.Promise.UnhandledRejectionException;
 import se.code77.jq.util.AsyncTests;
 import se.code77.jq.util.BlockingDataHolder;
 import se.code77.jq.util.DataFulfilledCallback;
+import se.code77.jq.util.DataProgressedCallback;
 import se.code77.jq.util.DataRejectedCallback;
 import se.code77.jq.util.SlowTask;
 import se.code77.jq.util.TestConfig;
@@ -126,8 +127,8 @@ public class PromiseTests extends AsyncTests {
     @Test
     public void resolved_isImmutable() {
         final Deferred<String> deferred = JQ.defer();
-        Promise<String> p = deferred.promise;
 
+        Promise<String> p = deferred.promise;
         deferred.resolve(TEST_VALUE1);
 
         deferred.resolve(TEST_VALUE2);
@@ -521,6 +522,78 @@ public class PromiseTests extends AsyncTests {
         assertPending(p3);
         Thread.sleep(1000);
         assertResolved(p3, TEST_VALUE1);
+    }
+
+    @Test
+    public void progress_isProgressedAll() {
+        Deferred<String> deferred = JQ.defer();
+        Promise<String> p = deferred.promise;
+        BlockingDataHolder<Float> progress1 = new BlockingDataHolder<>();
+        BlockingDataHolder<Float> progress2 = new BlockingDataHolder<>();
+
+        p.progress(new DataProgressedCallback(progress1));
+        p.progress(new DataProgressedCallback(progress2));
+
+        assertNoData(progress1, 1000);
+        assertNoData(progress2, 1000);
+
+        deferred.notify(0.5f);
+
+        assertData(progress1, 1000, 0.5f);
+        assertData(progress2, 1000, 0.5f);
+    }
+
+    @Test
+    public void preProgress_isProgressedOne() {
+        Deferred<String> deferred = JQ.defer();
+        Promise<String> p = deferred.promise;
+        BlockingDataHolder<Float> progress1 = new BlockingDataHolder<>();
+        BlockingDataHolder<Float> progress2 = new BlockingDataHolder<>();
+
+        p.progress(new DataProgressedCallback(progress1));
+        assertNoData(progress1, 1000);
+
+        deferred.notify(0.5f);
+        assertData(progress1, 1000, 0.5f);
+
+        p.progress(new DataProgressedCallback(progress2));
+        assertNoData(progress1, 1000);
+        assertData(progress2, 1000, 0.5f);
+    }
+
+    @Test
+    public void noProgress_isNotProgressed() {
+        Deferred<String> deferred = JQ.defer();
+        Promise<String> p = deferred.promise;
+        BlockingDataHolder<Float> progress1 = new BlockingDataHolder<>();
+
+        p.progress(new DataProgressedCallback(progress1));
+        assertNoData(progress1, 1000);
+    }
+
+    @Test
+    public void progress_isNotPropagated() {
+        final Deferred<String> deferred1 = JQ.defer();
+        final Deferred<String> deferred2 = JQ.defer();
+        final Promise<String> p1 = deferred1.promise;
+        final Promise<String> p2 = deferred2.promise;
+        BlockingDataHolder<Float> progress1 = new BlockingDataHolder<>();
+
+        p1.then(new OnFulfilledCallback<String, String>() {
+            @Override
+            public Future<String> onFulfilled(String value) throws Exception {
+                return p2;
+            }
+        }).progress(new DataProgressedCallback(progress1));
+
+        deferred1.notify(0.5f);
+        assertNoData(progress1, 1000);
+
+        deferred1.resolve(TEST_VALUE1);
+        assertNoData(progress1, 1000);
+
+        deferred2.notify(0.3f);
+        assertData(progress1, 1000, 0.3f);
     }
 
     @Test

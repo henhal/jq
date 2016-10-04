@@ -22,16 +22,19 @@ class PromiseImpl<V> implements Promise<V> {
     private static final class Link<V, NV> {
         private final OnFulfilledCallback<V, NV> onFulfilledCallback;
         private final OnRejectedCallback<NV> onRejectedCallback;
+        private final OnProgressedCallback onProgressedCallback;
         private final Dispatcher dispatcher;
         @SuppressWarnings("rawtypes")
         private final PromiseImpl nextPromise; // Raw type necessary
 
         private Link(
                 OnFulfilledCallback<V, NV> onFulfilledCallback,
-                OnRejectedCallback<NV> onRejectedCallback, Dispatcher dispatcher,
+                OnRejectedCallback<NV> onRejectedCallback,
+                OnProgressedCallback onProgressedCallback, Dispatcher dispatcher,
                 PromiseImpl<NV> nextPromise) {
             this.onFulfilledCallback = onFulfilledCallback;
             this.onRejectedCallback = onRejectedCallback;
+            this.onProgressedCallback = onProgressedCallback;
             this.dispatcher = dispatcher;
             this.nextPromise = nextPromise;
         }
@@ -45,6 +48,7 @@ class PromiseImpl<V> implements Promise<V> {
     private final List<Link<V, ?>> mLinks = new ArrayList<>();
     private final boolean mTerminate;
     private StateSnapshot<V> mState;
+    private Float mProgress;
 
     private PromiseImpl(boolean terminate) {
         mState = new StateSnapshot<V>(State.PENDING, null, null);
@@ -77,8 +81,13 @@ class PromiseImpl<V> implements Promise<V> {
 
     @Override
     public final <NV> Promise<NV> then(
+            OnFulfilledCallback<V, NV> onFulfilled, OnRejectedCallback<NV> onRejected, OnProgressedCallback onProgressed) {
+        return addLink(onFulfilled, onRejected, onProgressed, false);
+    }
+    @Override
+    public final <NV> Promise<NV> then(
             OnFulfilledCallback<V, NV> onFulfilled, OnRejectedCallback<NV> onRejected) {
-        return addLink(onFulfilled, onRejected, false);
+        return then(onFulfilled, onRejected, null);
     }
 
     @Override
@@ -132,12 +141,17 @@ class PromiseImpl<V> implements Promise<V> {
     }
 
     @Override
+    public final Promise<V> progress(OnProgressedCallback onProgressed) {
+        return then(null, null, onProgressed);
+    }
+
+    @Override
     public final synchronized void done(
             OnFulfilledCallback<V, Void> onFulfilled, OnRejectedCallback<Void> onRejected) {
         // This terminates the chain by making the next promise terminating,
         // meaning it will throw unhandled exceptions instead of pass them
         // on.
-        addLink(onFulfilled, onRejected, true);
+        addLink(onFulfilled, onRejected, null, true);
     }
 
     @Override
@@ -310,16 +324,31 @@ class PromiseImpl<V> implements Promise<V> {
         handleCompletion();
     }
 
+    synchronized void _notify(float progress) {
+        if (!isPending()) {
+            warn("Updating progress on non-pending promise is a no-op, ignoring");
+            return;
+        }
+
+        mProgress = progress;
+        info("notified with progress " + progress);
+        handleProgress(progress);
+    }
+
     @SuppressWarnings("unchecked")
     private synchronized final <NV> Promise<NV> addLink(OnFulfilledCallback<V, NV> onFulfilled,
-            OnRejectedCallback<NV> onRejected, boolean terminate) {
-        Link<V, NV> link = new Link<>(onFulfilled, onRejected,
+                                                        OnRejectedCallback<NV> onRejected, OnProgressedCallback onProgress, boolean terminate) {
+        Link<V, NV> link = new Link<>(onFulfilled, onRejected, onProgress,
                 getDispatcher(),
                 new PromiseImpl<NV>(terminate));
 
         if (isPending()) {
             mLinks.add(link);
             debug("Link added: " + link);
+
+            if (mProgress != null) {
+                handleProgress(link, mProgress);
+            }
         } else {
             handleCompletion(link);
         }
@@ -355,7 +384,7 @@ class PromiseImpl<V> implements Promise<V> {
     }
 
     private void handleCompletion(final Link<V, ?> link) {
-        debug("Handling link: " + link);
+        debug("Handling completion for link: " + link);
 
         link.dispatcher.dispatch(new Runnable() {
             @SuppressWarnings({
@@ -402,6 +431,11 @@ class PromiseImpl<V> implements Promise<V> {
                                 link.nextPromise._reject(reason);
                                 return null;
                             }
+                        }, new OnProgressedCallback() {
+                            @Override
+                            public void onProgressed(float progress) {
+                                link.nextPromise._notify(progress);
+                            }
                         }).done();
                     } else {
                         verbose("Link returned null, next promise will resolve directly");
@@ -415,6 +449,25 @@ class PromiseImpl<V> implements Promise<V> {
                     info("Promise rejected from callback: " + sw.toString());
 
                     link.nextPromise._reject(reason);
+                }
+            }
+        });
+    }
+
+    private void handleProgress(float progress) {
+        for (final Link<V, ?> link : mLinks) {
+            handleProgress(link, progress);
+        }
+    }
+
+    private void handleProgress(final Link<V, ?> link, final float progress) {
+        debug("Handling progress for link: " + link);
+
+        link.dispatcher.dispatch(new Runnable() {
+            @Override
+            public void run() {
+                if (link.onProgressedCallback != null) {
+                    link.onProgressedCallback.onProgressed(progress);
                 }
             }
         });
