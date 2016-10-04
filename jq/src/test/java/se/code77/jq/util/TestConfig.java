@@ -18,17 +18,21 @@ public class TestConfig {
             sTestThread = new TestThread("Async event thread");
             sTestThread.start();
 
-            Config.setConfig(new Config(false) {
+            Config config = new Config(false) {
                 @Override
                 public Dispatcher createDispatcher() {
-                    return new TestDispatcher(sTestThread);
+                    Dispatcher d = super.createDispatcher();
+
+                    return d != null ? d : mDispatchers.get(sTestThread);
                 }
 
                 @Override
                 public Logger getLogger() {
                     return new TestLogger(LogLevel.DEBUG);
                 }
-            });
+            }.registerDispatcher(sTestThread, new TestDispatcher(sTestThread));
+
+            Config.setConfig(config);
         }
     }
 

@@ -1,6 +1,9 @@
 
 package se.code77.jq.config;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import se.code77.jq.Promise;
 import se.code77.jq.config.android.AndroidConfig;
 
@@ -9,6 +12,8 @@ import se.code77.jq.config.android.AndroidConfig;
  * host environment, as well as tweaking of behaviour.
  */
 public abstract class Config {
+    protected final Map<Thread, Dispatcher> mDispatchers = new HashMap<>();
+
     /**
      * A dispatcher is capable of asynchronously dispatching events containing
      * code to be executed in a thread implementing an event loop. Each
@@ -139,11 +144,15 @@ public abstract class Config {
     public final boolean monitorUnterminated;
 
     /**
-     * Create a dispatcher capable of dispatching events to the current thread;
-     * or if the current thread does not implement an event loop, to another thread that does.
+     * Create a dispatcher for the current thread. Dispatchers are registered through
+     * #registterDispatcher(Thread, Dispatcher) but the exact behavior may differ for various
+     * Config implementations (e.g. there may be a default dispatcher, or the call may cause an
+     * error).
      * @return Dispatcher
      */
-    public abstract Dispatcher createDispatcher();
+    public Dispatcher createDispatcher() {
+        return mDispatchers.get(Thread.currentThread());
+    }
 
     /**
      * Get a logger
@@ -151,4 +160,40 @@ public abstract class Config {
      */
     public abstract Logger getLogger();
 
+    /**
+     * Register a dispatcher for the given thread. Typically, any registered promise callbacks will
+     * be invoked on the dispatcher associated with the thread registering them, but the exact
+     * behavior may differ for various Config implementations.
+     * @param thread Thread
+     * @param dispatcher Dispatcher
+     *
+     * @return Config instance (for chaining)
+     */
+    public Config registerDispatcher(Thread thread, Dispatcher dispatcher) {
+        mDispatchers.put(thread, dispatcher);
+
+        return this;
+    }
+
+    /**
+     * Unregister the (previously registered) dispatcher for the given thread
+     * @param thread Thread
+     *
+     * @return Config instance (for chaining)
+     */
+    public Config unregisterDispatcher(Thread thread) {
+        mDispatchers.remove(thread);
+
+        return this;
+    }
+
+    /**
+     * Check if the given thread is registered as a dispatcher thread using
+     * #registerDispatcher(Thread, Dispatcher)
+     * @param thread Thread
+     * @return true if thread is registered as dispatcher thread
+     */
+    public boolean isDispatcherThread(Thread thread) {
+        return mDispatchers.containsKey(thread);
+    }
 }

@@ -56,6 +56,7 @@ public class JQTests extends AsyncTests {
                 JQ.resolve(TEST_VALUE1), JQ.resolve(TEST_VALUE2));
 
         TestConfig.waitForIdle();
+        Thread.sleep(500);
         assertResolved(p, Arrays.asList(TEST_VALUE1, TEST_VALUE2));
     }
 

@@ -3,6 +3,8 @@ package se.code77.jq;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -91,6 +93,46 @@ class PromiseImpl<V> implements Promise<V> {
     @Override
     public <NV> Promise<NV> then(OnFulfilledCallback<V, NV> onFulfilled) {
         return then(onFulfilled, null);
+    }
+
+    @Override
+    public <NV> Promise<NV> spread(final OnFulfilledSpreadCallback<V, NV> onFulfilled, OnRejectedCallback<NV> onRejected) {
+        return then(new OnFulfilledCallback<V, NV>() {
+            @Override
+            public Future<NV> onFulfilled(V value) throws Exception {
+                final Method m = getOnFulfilledMethod(onFulfilled);
+                final Object[] args = new Object[m.getParameterTypes().length];
+
+                if (value instanceof List) {
+                    List<?> values = (List<?>) value;
+
+                    for (int i = 0; i < args.length && i < values.size(); i++) {
+                        args[i] = values.get(i);
+                    }
+                } else if (value != null) {
+                    throw new IllegalSpreadCallbackException("Resolved value for spread callback is not a List");
+                }
+
+                try {
+                    return (Future<NV>) m.invoke(onFulfilled, args);
+                } catch (InvocationTargetException ite) {
+                    Throwable e = ite.getTargetException();
+
+                    if (e instanceof Exception) {
+                        throw (Exception) e;
+                    } else {
+                        throw (Error) e;
+                    }
+                } catch (Exception e) {
+                    throw new IllegalSpreadCallbackException("Could not invoke spread callback", e);
+                }
+            }
+        }, onRejected);
+    }
+
+    @Override
+    public <NV> Promise<NV> spread(final OnFulfilledSpreadCallback<V, NV> onFulfilled) {
+        return spread(onFulfilled, null);
     }
 
     @Override
@@ -196,6 +238,8 @@ class PromiseImpl<V> implements Promise<V> {
 
     @Override
     public synchronized V get() throws InterruptedException, ExecutionException {
+        warnBlocking();
+
         while (isPending()) {
             wait();
         }
@@ -211,6 +255,8 @@ class PromiseImpl<V> implements Promise<V> {
     public synchronized V get(long timeout, TimeUnit unit) throws InterruptedException,
             ExecutionException,
             TimeoutException {
+        warnBlocking();
+
         long now = System.currentTimeMillis();
         long expires = now + unit.toMillis(timeout);
 
@@ -248,34 +294,41 @@ class PromiseImpl<V> implements Promise<V> {
         return getLogPrefix() + mState.toString() + (mTerminate ? ", TERMINATE" : "");
     }
 
-    private void ensurePending() {
-        if (isFulfilled()) {
-            throw new IllegalStateException("Promise already fulfilled");
-        } else if (isRejected()) {
-            throw new IllegalStateException("Promise already rejected");
+    private void warnBlocking() {
+        if (Config.getConfig().isDispatcherThread(Thread.currentThread())) {
+            warn("Calling blocking method on dispatcher thread may cause deadlock.");
         }
     }
 
     synchronized void _resolve(V value) {
-        ensurePending();
+        if (!isPending()) {
+            warn("Resolving non-pending promise is a no-op, ignoring");
+            return;
+        }
 
         mState = new StateSnapshot<>(State.FULFILLED, value, null);
         info("fulfilled with value '" + value + "'");
-        notify();
+        notifyAll();
         handleCompletion();
     }
 
     synchronized void _reject(Exception reason) {
-        ensurePending();
+        if (!isPending()) {
+            warn("Rejecting non-pending promise is a no-op, ignoring");
+            return;
+        }
 
         mState = new StateSnapshot<>(State.REJECTED, null, reason);
         info("rejected with reason '" + reason + "'");
-        notify();
+        notifyAll();
         handleCompletion();
     }
 
     synchronized void _notify(float progress) {
-        ensurePending();
+        if (!isPending()) {
+            warn("Updating progress on non-pending promise is a no-op, ignoring");
+            return;
+        }
 
         mProgress = progress;
         info("notified with progress " + progress);
@@ -401,7 +454,6 @@ class PromiseImpl<V> implements Promise<V> {
         });
     }
 
-
     private void handleProgress(float progress) {
         for (final Link<V, ?> link : mLinks) {
             handleProgress(link, progress);
@@ -419,6 +471,16 @@ class PromiseImpl<V> implements Promise<V> {
                 }
             }
         });
+    }
+
+    private <NV> Method getOnFulfilledMethod(OnFulfilledSpreadCallback<V, NV> onFulfilled) throws IllegalSpreadCallbackException {
+        for (Method m : onFulfilled.getClass().getMethods()) {
+            if (m.getName().equals("onFulfilled") && m.getReturnType().equals(Future.class)) {
+                return m;
+            }
+        }
+
+        throw new IllegalSpreadCallbackException("Spread callback has no valid onFulfilled method");
     }
 
     private Dispatcher getDispatcher() {

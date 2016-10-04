@@ -1,6 +1,6 @@
 # README #
 
-This is a Java 7 compatible promise implementation aiming to conform to the [Promises/A+](https://promisesaplus.com/) specification to as much extent as possible, with the constraints given by the Java 7 language.
+This is a Java 7 / Android compatible promise implementation aiming to conform to the [Promises/A+](https://promisesaplus.com/) specification to as much extent as possible, with the constraints given by the Java 7 language.
 
 The implementation is heavily influenced by Kris Kowal's [Q](https://github.com/kriskowal/q) JavaScript library.
 
@@ -29,15 +29,15 @@ JQ is published on [Bintray/jCenter](https://bintray.com/code77/maven/jq) and ma
 
 ##### Jars 
 
-* [jq-1.0.4-debug.jar](http://code77se.github.io/jq/bin/1.0.4/jq-1.0.4-debug.jar)
-* [jq-1.0.4-release.jar](http://code77se.github.io/jq/bin/1.0.4/jq-1.0.4-release.jar)
+* [jq-1.0.5-debug.jar](http://code77se.github.io/jq/bin/1.0.5/jq-1.0.5-debug.jar)
+* [jq-1.0.5-release.jar](http://code77se.github.io/jq/bin/1.0.5/jq-1.0.5-release.jar)
 
 ##### Maven
 ```xml
 <dependency>
    <groupId>se.code77.jq</groupId>
    <artifactId>jq</artifactId>
-   <version>[1.0.4,)</version>
+   <version>[1.0.5,)</version>
 </dependency>
 ```
 
@@ -171,6 +171,21 @@ private Promise<Boolean> someFuzzyCheck() {
     return Value.wrap(first.equals(second) || first.equals(third));
   });
 }
+
+// Synchronize multiple parallel operations using all and spread
+private Promise<Boolean> someFuzzyCheck() {
+  // Assuming getFirstValue et. al. all return promises for the same type, e.g. Promise<String>,
+  // we can run them in parallel and use JQ.all to wait until all values are available. The
+  // resulting promise will be resolved with a List<String>.
+  // This is the same as the previous example but we use spread to automatically assign the elements
+  // of the resolved list to individual arguments.
+  return JQ.all(getFirstValue(), getSecondValue(), getThirdValue()).spread(first, second, third -> {
+
+    // Return some result that depends on all calculated values
+    return Value.wrap(first.equals(second) || first.equals(third));
+  });
+}
+
 
 // Run two operations in parallel, resolving the promise with the result of the operation that finishes first.
 // The resulting promise will be rejected only if all operations fails.

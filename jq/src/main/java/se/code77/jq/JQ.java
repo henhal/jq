@@ -70,6 +70,28 @@ public final class JQ {
         }
 
         /**
+         * Resolve (or reject) the promise with the outcome of another promise.
+         * Effectively, this deferred's promise will inherit the state of the other promise.
+         *
+         * @param p The promise to resolve with
+         */
+        public void resolve(Promise<V> p) {
+            p.then(new OnFulfilledCallback<V, Void>() {
+                @Override
+                public Future<Void> onFulfilled(V value) throws Exception {
+                    ((PromiseImpl<V>) promise)._resolve(value);
+                    return null;
+                }
+            }, new OnRejectedCallback<Void>() {
+                @Override
+                public Future<Void> onRejected(Exception reason) throws Exception {
+                    ((PromiseImpl<V>) promise)._reject(reason);
+                    return null;
+                }
+            }).done();
+        }
+
+        /**
          * Reject the promise
          * 
          * @param reason Exception to reject the promise with
@@ -700,7 +722,7 @@ public final class JQ {
             @Override
             public void handle(final Deferred<V> deferred) {
                 if (promises.size() == 0) {
-                    deferred.resolve(null);
+                    deferred.resolve((V)null);
                 } else {
                     new PromiseListStateChecker<V>() {
                         @Override
