@@ -82,6 +82,10 @@ class PromiseImpl<V> implements Promise<V> {
     @Override
     public final <NV> Promise<NV> then(
             OnFulfilledCallback<V, NV> onFulfilled, OnRejectedCallback<NV> onRejected, OnProgressedCallback onProgressed) {
+        if (onFulfilled == null) {
+            throw new NullPointerException("Fulfilled handler must not be null");
+        }
+
         return addLink(onFulfilled, onRejected, onProgressed, false);
     }
     @Override
@@ -97,6 +101,10 @@ class PromiseImpl<V> implements Promise<V> {
 
     @Override
     public <NV> Promise<NV> spread(final OnFulfilledSpreadCallback<V, NV> onFulfilled, OnRejectedCallback<NV> onRejected) {
+        if (onFulfilled == null) {
+            throw new NullPointerException("Fulfilled handler must not be null");
+        }
+
         return then(new OnFulfilledCallback<V, NV>() {
             @Override
             public Future<NV> onFulfilled(V value) throws Exception {
@@ -136,13 +144,13 @@ class PromiseImpl<V> implements Promise<V> {
     }
 
     @Override
-    public final <NV> Promise<NV> fail(OnRejectedCallback<NV> onRejected) {
-        return then(null, onRejected);
+    public final Promise<V> fail(OnRejectedCallback<V> onRejected) {
+        return addLink(null, onRejected, null, false);
     }
 
     @Override
     public final Promise<V> progress(OnProgressedCallback onProgressed) {
-        return then(null, null, onProgressed);
+        return addLink(null, null, onProgressed, false);
     }
 
     @Override
