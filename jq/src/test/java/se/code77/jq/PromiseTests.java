@@ -69,11 +69,16 @@ public class PromiseTests extends AsyncTests {
 
         // Test one-arg fail
         BlockingDataHolder<Exception> fail1 = new BlockingDataHolder<>();
-        p.fail(new DataRejectedCallback<>(fail1));
+        p.fail(new DataRejectedCallback<String>(fail1));
 
         // Test two-arg then
         BlockingDataHolder<Exception> fail2 = new BlockingDataHolder<>();
-        p.then(null, new DataRejectedCallback<>(fail2));
+        p.then(new OnFulfilledCallback<String, Void>() {
+            @Override
+            public Future<Void> onFulfilled(String value) throws Exception {
+                return null;
+            }
+        }, new DataRejectedCallback<Void>(fail2));
 
         deferred.reject(TEST_REASON1);
 

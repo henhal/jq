@@ -328,6 +328,7 @@ public interface Promise<V> extends Future<V> {
      * @return A new promise that will be resolved with the value
      *         returned/rejected with the reason thrown from any of the callback
      *         handlers.
+     * @throws NullPointerException if onFulfilled is null
      */
     public <NV> Promise<NV> then(
             OnFulfilledCallback<V, NV> onFulfilled, OnRejectedCallback<NV> onRejected, OnProgressedCallback onProgressed);
@@ -345,13 +346,14 @@ public interface Promise<V> extends Future<V> {
      * immediate execution in a future event loop turn, but will never be
      * inlined.
      * Note that this method MUST be run on a thread implementing an event loop.
-     * 
+     *
      * @param <NV> Type of the value returned by the callback handlers
      * @param onFulfilled Fulfillment handler
      * @param onRejected Rejection handler
      * @return A new promise that will be resolved with the value
      *         returned/rejected with the reason thrown from any of the callback
      *         handlers.
+     * @throws NullPointerException if onFulfilled is null
      */
     public <NV> Promise<NV> then(
             OnFulfilledCallback<V, NV> onFulfilled, OnRejectedCallback<NV> onRejected);
@@ -369,6 +371,7 @@ public interface Promise<V> extends Future<V> {
      * @return A new promise that will be resolved with the value
      *         returned/rejected with the reason thrown from the supplied
      *         callback handler.
+     * @throws NullPointerException if onFulfilled is null
      */
     public <NV> Promise<NV> then(OnFulfilledCallback<V, NV> onFulfilled);
 
@@ -387,6 +390,7 @@ public interface Promise<V> extends Future<V> {
      * @return A new promise that will be resolved with the value
      *         returned/rejected with the reason thrown from the supplied
      *         callback handler.
+     * @throws NullPointerException if onFulfilled is null
      */
     public <NV> Promise<NV> spread(
             OnFulfilledSpreadCallback<V, NV> onFulfilled, OnRejectedCallback<NV> onRejected);
@@ -405,6 +409,7 @@ public interface Promise<V> extends Future<V> {
      * @return A new promise that will be resolved with the value
      *         returned/rejected with the reason thrown from the supplied
      *         callback handler.
+     * @throws NullPointerException if onFulfilled is null
      */
     public <NV> Promise<NV> spread(OnFulfilledSpreadCallback<V, NV> onFulfilled);
 
@@ -417,12 +422,11 @@ public interface Promise<V> extends Future<V> {
      * 
      * @see #then(OnFulfilledCallback, OnRejectedCallback)
      * @param onRejected Rejection handler
-     * @param <NV> Type of the value returned by the callback handlers
      * @return A new promise that will be resolved with the value
      *         returned/rejected with the reason thrown from the supplied
      *         callback handler.
      */
-    public <NV> Promise<NV> fail(OnRejectedCallback<NV> onRejected);
+    public Promise<V> fail(OnRejectedCallback<V> onRejected);
 
     /**
      * Observe the progress of this promise by adding a progress callback which
