@@ -70,12 +70,16 @@ public final class JQ {
         }
 
         /**
-         * Resolve (or reject) the promise with the outcome of another promise.
-         * Effectively, this deferred's promise will inherit the state of the other promise.
+         * Resolve (or reject) the promise with the outcome of a future (which may be another
+         * promise).
+         * Effectively, the given future will be promisified and this deferred's promise will
+         * inherit the state of that promise.
          *
-         * @param p The promise to resolve with
+         * @param future The future to resolve with
          */
-        public void resolve(Promise<V> p) {
+        public void resolve(Future<V> future) {
+            Promise<V> p = JQ.wrap(future);
+
             p.then(new OnFulfilledCallback<V, Void>() {
                 @Override
                 public Future<Void> onFulfilled(V value) throws Exception {
@@ -309,7 +313,9 @@ public final class JQ {
      * @return New promise
      */
     public static <V> Promise<V> wrap(final Future<V> future) {
-        if (future instanceof Promise) {
+        if (future == null) {
+            return resolve(null);
+        } else if (future instanceof Promise) {
             return (Promise<V>) future;
         } else if (future instanceof Value) {
             return resolve(((Value<V>) future).get());
