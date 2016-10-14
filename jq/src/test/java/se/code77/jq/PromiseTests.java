@@ -156,9 +156,9 @@ public class PromiseTests extends AsyncTests {
     public void deferred_isResolvedWithResolvedPromise() throws Exception {
         final Deferred<Integer> deferred = JQ.defer();
         Promise<Integer> p = deferred.promise;
-        Promise<Integer> p2 = JQ.defer(new SlowTask<>(42, 500));
+        Future<Integer> f = JQ.defer(new SlowTask<>(42, 500));
 
-        deferred.resolve(p2);
+        deferred.resolve(f);
         assertPending(p);
 
         Thread.sleep(1000);
@@ -169,13 +169,52 @@ public class PromiseTests extends AsyncTests {
     public void deferred_isResolvedWithRejectedPromise() throws Exception {
         final Deferred<Integer> deferred = JQ.defer();
         Promise<Integer> p = deferred.promise;
-        Promise<Integer> p2 = JQ.defer(new SlowTask<Integer>(TEST_REASON1, 500));
+        Future<Integer> f = JQ.defer(new SlowTask<Integer>(TEST_REASON1, 500));
 
-        deferred.resolve(p2);
+        deferred.resolve(f);
         assertPending(p);
 
         Thread.sleep(1000);
         assertRejected(p, TEST_REASON1);
+    }
+
+    @Test
+    public void deferred_isResolvedWithValue() throws Exception {
+        final Deferred<Integer> deferred = JQ.defer();
+        Promise<Integer> p = deferred.promise;
+        Future<Integer> f = Value.wrap(42);
+
+        deferred.resolve(f);
+        assertPending(p);
+
+        Thread.sleep(1000);
+        assertResolved(p, 42);
+    }
+
+    @Test
+    public void deferred_isResolvedWithFutureTask() throws Exception {
+        final Deferred<Integer> deferred = JQ.defer();
+        Promise<Integer> p = deferred.promise;
+        FutureTask<Integer> f = new FutureTask<>(new SlowTask<>(42, 500));
+        Executors.newSingleThreadExecutor().execute(f);
+
+        deferred.resolve(f);
+        assertPending(p);
+
+        Thread.sleep(1000);
+        assertResolved(p, 42);
+    }
+
+    @Test
+    public void deferred_isResolvedWithNull() throws Exception {
+        final Deferred<Integer> deferred = JQ.defer();
+        Promise<Integer> p = deferred.promise;
+        Future<Integer> f = null;
+
+        deferred.resolve(f);
+
+        Thread.sleep(1000);
+        assertResolved(p, null);
     }
 
     @Test
