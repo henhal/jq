@@ -641,6 +641,30 @@ public class PromiseTests extends AsyncTests {
     }
 
     @Test
+    public void finally_isCalledForResolved() {
+        // Promise is resolved -> fin is called, next promise is resolved with same value
+
+    }
+
+    @Test
+    public void finally_isCalledForRejected() {
+        // Promise is rejected -> fin is called, next promise is rejected with same reason
+
+    }
+
+    @Test
+    public void finally_isCalledAndThrowsForResolved() {
+        // Promise is resolved -> fin is called but throws exception, next promise is rejected with that reason
+
+    }
+
+    @Test
+    public void finally_isCalledAndThrowsForRejected() {
+        // Promise is rejected -> fin is called but throws exception, next promise is rejected with that reason
+
+    }
+
+    @Test
     public void spread_2() {
         final Promise<List<String>> p = JQ.all(JQ.resolve(TEST_VALUE1), JQ.resolve(TEST_VALUE2));
         final BlockingDataHolder<String> spread = new BlockingDataHolder<>();

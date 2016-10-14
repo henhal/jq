@@ -442,6 +442,12 @@ public interface Promise<V> extends Future<V> {
      */
     public Promise<V> progress(OnProgressedCallback onProgressed);
 
+    public interface OnFinallyCallback {
+        void onFinally() throws Exception;
+    }
+
+    public Promise<V> fin(OnFinallyCallback onFinallyCallback);
+
     /**
      * Adds the supplied callback handlers, just like calling
      * {@link #then(OnFulfilledCallback, OnRejectedCallback)}, but also adds a
