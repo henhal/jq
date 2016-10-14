@@ -309,7 +309,9 @@ public final class JQ {
      * @return New promise
      */
     public static <V> Promise<V> wrap(final Future<V> future) {
-        if (future instanceof Promise) {
+        if (future == null) {
+            return resolve(null);
+        } else if (future instanceof Promise) {
             return (Promise<V>) future;
         } else if (future instanceof Value) {
             return resolve(((Value<V>) future).get());

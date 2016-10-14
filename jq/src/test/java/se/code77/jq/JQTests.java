@@ -281,6 +281,14 @@ public class JQTests extends AsyncTests {
     }
 
     @Test
+    public void wrap_isResolvedForNull() throws InterruptedException {
+        Promise<String> p = JQ.wrap(null);
+
+        TestConfig.waitForIdle();
+        assertResolved(p, null);
+    }
+
+    @Test
     public void wrap_isResolvedForFutureTaskCompleted() throws InterruptedException {
         FutureTask<String> future = new FutureTask<>(new SlowTask<>(TEST_VALUE1, 1000));
         Executors.newSingleThreadExecutor().execute(future);
