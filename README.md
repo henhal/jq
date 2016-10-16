@@ -100,6 +100,8 @@ doSomething().then(x -> {
   return Value.wrap("Foobar");
 }).fail(err -> {
   // Exception was thrown, do something with it
+}).fin({
+  // Always called
 }).done();
 ```
 
