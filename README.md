@@ -14,6 +14,34 @@ A promise is said to be resolved or fulfilled when the task associated with the 
 
 Promises are ideal for code that may be broken down into multiple, shorter tasks that depend on each other. Each step of the task is then typically performed in the fulfillment callback for the previous task. This is very flexible because each step may return either a direct value, such as a `String` (which must then be wrapped in a `Value`), or a promise associated with a new task. In case a direct value is returned or an exception is thrown, it will be used to directly resolve/reject the next promise in the chain. On the other hand, if a new promise is returned, the next promise in the chain will be resolved/rejected with the value of the new promise once it's done.
 
+The promise methods `fail` and `fin` can be seen as asynchronous versions of `catch` and `finally` in synchronous programming and their semantics are basically the same:
+
+```
+try {
+  int x = foo();
+  int y = bar(x);
+  return baz(y);
+} catch (Exception e) {
+  return -1;
+} finally {
+  // Always called
+}
+```
+
+is analogous too
+
+```
+return foo().then(x -> {
+  return bar(x);
+}).then(y -> {
+  return baz(y);
+}).fail(e -> {
+  return Value.wrap(-1);
+}).fin({
+  // Always called
+});
+```
+
 A caller receiving a promise may only observe its state and attach callbacks to it, never modify its state. Only the task that created the promise may modify it. To accomplish this, promises can only be created by calling any of the `defer` methods on the `JQ` class. These methods give the task access to a deferred object which may be used to modify the state of a promise (however, note that the state of a promise may be modified only once). There are also convenience methods for creating promises for tasks handled with standard Java concurrent classes such as `Callable` and `Executor`.
 
 The `JQ` class also contains several useful utilities. For example, multiple parallel asynchronous tasks can be coordinated using the `all`, `any` or `race` methods.
