@@ -418,6 +418,7 @@ public interface Promise<V> extends Future<V> {
      * will be called when the promise is rejected. This is the same as calling
      * {@link #then(OnFulfilledCallback, OnRejectedCallback)} with null as the
      * onFulfilled argument.
+     * Analogous to a catch clause in synchronous code.
      * Note that this method MUST be run on a thread implementing an event loop.
      * 
      * @see #then(OnFulfilledCallback, OnRejectedCallback)
@@ -441,6 +442,35 @@ public interface Promise<V> extends Future<V> {
      * @return A new promise that will inherit the state of this promise.
      */
     public Promise<V> progress(OnProgressedCallback onProgressed);
+
+    /**
+     * Callback interface invoked for promises that are either fulfilled or rejected.
+     *
+     */
+    public interface OnFinallyCallback {
+        /**
+         * Called when a promise is either fulfilled or rejected.
+         * If this method throws an exception the next promise will be rejected with it, otherwise
+         * the next promise will not be effected by the execution of this method.
+         *
+         * @throws Exception An exception
+         */
+        void onFinally() throws Exception;
+    }
+
+    /**
+     * Observe the state of this promise by adding a finally callback which
+     * will be called when the promise is either fulfilled or rejected.
+     * Note that this method MUST be run on a thread implementing an event loop.
+     * Analogous to a finally clause in synchronous code.
+     *
+     * @see #then(OnFulfilledCallback, OnRejectedCallback)
+     * @param onFinally finally callback
+     * @return A new promise that inherits the state of the previous promise, unless the finally
+     * callback throws an exception, in which case the new promise will be rejected with that
+     * exception.
+     */
+    public Promise<V> fin(OnFinallyCallback onFinally);
 
     /**
      * Adds the supplied callback handlers, just like calling
