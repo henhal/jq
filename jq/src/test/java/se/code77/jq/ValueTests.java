@@ -15,6 +15,7 @@ import se.code77.jq.Promise.OnFulfilledCallback;
 import se.code77.jq.Promise.UnhandledRejectionException;
 import se.code77.jq.util.AsyncTests;
 import se.code77.jq.util.BlockingDataHolder;
+import se.code77.jq.util.DataCallback;
 import se.code77.jq.util.DataFulfilledCallback;
 import se.code77.jq.util.DataRejectedCallback;
 import se.code77.jq.util.SlowTask;
@@ -72,5 +73,52 @@ public class ValueTests extends AsyncTests {
         assertEquals(true, value.isDone());
         assertEquals(false, value.cancel(true));
         assertEquals(true, value.isDone());
+    }
+
+    private <T> void setFlag(BlockingDataHolder<T> holder, T data) {
+        if (holder != null) {
+            holder.set(data);
+        } else {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    @Test
+    public void value_wrapVoid() {
+        try {
+            final BlockingDataHolder<String> holder = new BlockingDataHolder<>();
+
+            Value<Void> v = Value.wrap(new Value.VoidCallable() {
+                @Override
+                public void call() throws Exception {
+                    setFlag(holder, TEST_VALUE1);
+                }
+            });
+
+            assertEquals(Value.VOID, v);
+            assertData(holder, 100, TEST_VALUE1);
+        } catch (Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void value_wrapVoidThrows() {
+        final BlockingDataHolder<Exception> holder = new BlockingDataHolder<>();
+
+        try {
+            Value<Void> v = Value.wrap(new Value.VoidCallable() {
+                @Override
+                public void call() throws Exception {
+                    setFlag(null, null);
+                }
+            });
+
+            assertTrue(false);
+        } catch (Exception e) {
+            holder.set(e);
+        }
+
+        assertData(holder, 100);
     }
 }

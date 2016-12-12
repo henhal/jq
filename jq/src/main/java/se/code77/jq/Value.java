@@ -15,6 +15,17 @@ import java.util.concurrent.TimeUnit;
  */
 public final class Value<V> implements Future<V> {
     /**
+     * A wrapper for calling void methods and returning Value.VOID.
+     */
+    public interface VoidCallable {
+        /**
+         * This callback should call the void method.
+         * @throws Exception Any exception thrown by the callback.
+         */
+        void call() throws Exception;
+    }
+
+    /**
      * Return value for Void callbacks
      */
     public static final Value<Void> VOID = null;
@@ -34,6 +45,26 @@ public final class Value<V> implements Future<V> {
      */
     public static <V> Value<V> wrap(V value) {
         return new Value<V>(value);
+    }
+
+    /**
+     * Convenience for calling a void method and returning a Future&lt;Void&gt;.
+     * Examples:
+     *
+     * <pre>
+     *     return Value.wrap(this::doSomething);
+
+     *     return Value.wrap(() -&gt; doSomethingWithArgs(42));
+     * </pre>
+     *
+     * @param callable The callback making the call to a void method
+     * @return Value.VOID
+     * @throws Exception if the invoked void method threw an exception
+     */
+    public static Value<Void> wrap(VoidCallable callable) throws Exception {
+        callable.call();
+
+        return Value.VOID;
     }
 
     /**
