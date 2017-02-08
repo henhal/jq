@@ -83,13 +83,13 @@ public final class JQ {
             p.then(new OnFulfilledCallback<V, Void>() {
                 @Override
                 public Future<Void> onFulfilled(V value) throws Exception {
-                    ((PromiseImpl<V>) promise)._resolve(value);
+                    resolve(value);
                     return null;
                 }
             }, new OnRejectedCallback<Void>() {
                 @Override
                 public Future<Void> onRejected(Exception reason) throws Exception {
-                    ((PromiseImpl<V>) promise)._reject(reason);
+                    reject(reason);
                     return null;
                 }
             }).done();
@@ -101,7 +101,7 @@ public final class JQ {
          * @param reason Exception to reject the promise with
          */
         public void reject(Exception reason) {
-            ((PromiseImpl<V>) promise)._reject(reason);
+            ((PromiseImpl<V>) promise)._reject(reason, PromiseImpl.RejectionSource.DEFERRED);
         }
 
         /**
