@@ -139,11 +139,61 @@ public final class JQ {
      * operation is complete.
      *
      * @param <V> Type of the promise you want to convert to an empty (value) value.
+     * @deprecated Use OnFulfilledValueCallback&lt;V, Void&gt;
      */
     public static final class OnFulfilledVoidCallback<V> implements OnFulfilledCallback<V, Void> {
         @Override
         public Future<Void> onFulfilled(V value) {
             return null;
+        }
+    }
+
+    public interface Transform<V, NV> {
+        NV transform(V value);
+    }
+
+    /**
+     * Convenience for the case where you want to transform a fulfilled promise to a simple value.
+     *
+     * @param <V> Type of the fulfilled promise
+     * @param <NV> Type of the value to be returned
+     *
+     */
+    public static class OnFulfilledTransformCallback<V, NV> implements OnFulfilledCallback<V, NV> {
+        private final Transform<V, NV> mTransform;
+
+        /**
+         * Constructor. Pass a transform that converts the fulfilled value to another value.
+         * @param transform
+         */
+        public OnFulfilledTransformCallback(Transform<V, NV> transform) {
+            mTransform = transform;
+        }
+
+        @Override
+        public final Future<NV> onFulfilled(V value) {
+            NV nextValue = mTransform.transform(value);
+
+            return nextValue != null ? Value.wrap(nextValue) : null;
+        }
+    }
+
+    /**
+     * Convenience for the case where you want to transform a fulfilled promise to a constant value.
+     * Can also be used to easily transform a promised value to an empty promise by passing Value.VOID.
+     *
+     * @param <V> Type of the fulfilled promise
+     * @param <NV> Type of the value to be returned
+     *
+     */
+    public static final class OnFulfilledValueCallback<V, NV> extends OnFulfilledTransformCallback<V, NV> {
+        public OnFulfilledValueCallback(final NV nextValue) {
+            super(new Transform<V, NV>() {
+                @Override
+                public NV transform(V value) {
+                    return nextValue;
+                }
+            });
         }
     }
 
