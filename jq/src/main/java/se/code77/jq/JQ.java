@@ -139,6 +139,7 @@ public final class JQ {
      * operation is complete.
      *
      * @param <V> Type of the promise you want to convert to an empty (value) value.
+     * @deprecated Use {@link Promise#thenResolve(Object)} instead
      */
     public static final class OnFulfilledVoidCallback<V> implements OnFulfilledCallback<V, Void> {
         @Override

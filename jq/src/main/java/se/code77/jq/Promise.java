@@ -376,6 +376,23 @@ public interface Promise<V> extends Future<V> {
     public <NV> Promise<NV> then(OnFulfilledCallback<V, NV> onFulfilled);
 
     /**
+     * Convenience method, equivalent to adding a fulfillment callback that merely returns the given value.
+     *
+     * @param nextValue Value to resolve the next promise with
+     * @param <NV> Type of the value carried by the next promise
+     * @return A new promise that, provided the current promise is resolved, will be resolved with the given value.
+     */
+    public <NV> Promise<NV> thenResolve(NV nextValue);
+
+    /**
+     * Convenience method, equivalent to adding a fulfillment callback that merely throws the given exception
+     * @param reason Exception to reject the next promise with
+     * @param <NV> Type of the value carried by the next promise
+     * @return A new promise that, provided the current promise is resolved, will be rejected with the given reason.
+     */
+    public <NV> Promise<NV> thenReject(Exception reason, Class<NV> nextValueClass);
+
+    /**
      * Like {@link Promise#then(OnFulfilledCallback, OnRejectedCallback)} but only for promised List values. The
      * elements in the list will be spread as individual arguments on the supplied callback, which
      * should implement a suitable sub-interface of OnFulfilledSpreadCallback

@@ -1022,4 +1022,25 @@ public class PromiseTests extends AsyncTests {
         assertData(spread, 500);
     }
 
+    @Test
+    public void thenResolve() {
+        final Promise<String> p = JQ.resolve(1).thenResolve(TEST_VALUE1);
+
+        BlockingDataHolder<String> then1 = new BlockingDataHolder<>();
+        p.then(new DataFulfilledCallback<String, Void>(then1));
+
+        assertData(then1, 2000, TEST_VALUE1);
+        assertResolved(p, TEST_VALUE1);
+    }
+
+    @Test
+    public void thenReject() {
+        final Promise<String> p = JQ.resolve(1).thenReject(TEST_REASON1, String.class);
+
+        BlockingDataHolder<Exception> fail1 = new BlockingDataHolder<>();
+        p.fail(new DataRejectedCallback<String>(fail1));
+
+        assertData(fail1, 2000, TEST_REASON1);
+        assertRejected(p, TEST_REASON1);
+    }
 }
