@@ -120,6 +120,21 @@ class PromiseImpl<V> implements Promise<V> {
     }
 
     @Override
+    public Promise<V> tap(final OnTapCallback<V> onTap) {
+        return then(new OnFulfilledCallback<V, V>() {
+            @Override
+            public Future<V> onFulfilled(V value) throws Exception {
+                try {
+                    onTap.onTap(value);
+                } catch (RuntimeException e) {
+                    // Swallow
+                }
+                return Value.wrap(value);
+            }
+        });
+    }
+
+    @Override
     public <NV> Promise<NV> spread(final OnFulfilledSpreadCallback<V, NV> onFulfilled, OnRejectedCallback<NV> onRejected) {
         if (onFulfilled == null) {
             throw new NullPointerException("Fulfilled handler must not be null");
