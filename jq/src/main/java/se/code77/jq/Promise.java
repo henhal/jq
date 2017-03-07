@@ -34,7 +34,7 @@ public interface Promise<V> extends Future<V> {
          * @throws Exception Any exception thrown by this method will lead to
          *             the rejection of the next promise in the chain.
          */
-        Future<NV> onFulfilled(V value) throws Exception;
+        Future<? extends NV> onFulfilled(V value) throws Exception;
     }
 
     /**
@@ -65,7 +65,7 @@ public interface Promise<V> extends Future<V> {
      *            used to resolve the next promise in the chain.
      */
     public interface OnFulfilledSpreadCallback1<E, NV> extends OnFulfilledSpreadCallback<List<E>, NV> {
-        Future<NV> onFulfilled(E e1) throws Exception;
+        Future<? extends NV> onFulfilled(E e1) throws Exception;
     }
 
     /**
@@ -80,7 +80,7 @@ public interface Promise<V> extends Future<V> {
      *            used to resolve the next promise in the chain.
      */
     public interface OnFulfilledSpreadCallback2<E, E1 extends E, E2 extends E, NV> extends OnFulfilledSpreadCallback<List<E>, NV> {
-        Future<NV> onFulfilled(E1 e1, E2 e2) throws Exception;
+        Future<? extends NV> onFulfilled(E1 e1, E2 e2) throws Exception;
     }
 
     /**
@@ -96,7 +96,7 @@ public interface Promise<V> extends Future<V> {
      *            used to resolve the next promise in the chain.
      */
     public interface OnFulfilledSpreadCallback3<E, E1 extends E, E2 extends E, E3 extends E, NV> extends OnFulfilledSpreadCallback<List<E>, NV> {
-        Future<NV> onFulfilled(E1 e1, E2 e2, E3 e3) throws Exception;
+        Future<? extends NV> onFulfilled(E1 e1, E2 e2, E3 e3) throws Exception;
     }
 
     /**
@@ -113,7 +113,7 @@ public interface Promise<V> extends Future<V> {
      *            used to resolve the next promise in the chain.
      */
     public interface OnFulfilledSpreadCallback4<E, E1 extends E, E2 extends E, E3 extends E, E4 extends E, NV> extends OnFulfilledSpreadCallback<List<E>, NV> {
-        Future<NV> onFulfilled(E1 e1, E2 e2, E3 e3, E4 e4) throws Exception;
+        Future<? extends NV> onFulfilled(E1 e1, E2 e2, E3 e3, E4 e4) throws Exception;
     }
 
     /**
@@ -131,7 +131,7 @@ public interface Promise<V> extends Future<V> {
      *            used to resolve the next promise in the chain.
      */
     public interface OnFulfilledSpreadCallback5<E, E1 extends E, E2 extends E, E3 extends E, E4 extends E, E5 extends E, NV> extends OnFulfilledSpreadCallback<List<E>, NV> {
-        Future<NV> onFulfilled(E1 e1, E2 e2, E3 e3, E4 e4, E5 e5) throws Exception;
+        Future<? extends NV> onFulfilled(E1 e1, E2 e2, E3 e3, E4 e4, E5 e5) throws Exception;
     }
 
     /**
@@ -150,7 +150,7 @@ public interface Promise<V> extends Future<V> {
          * @throws Exception Any exception thrown by this method will lead to
          *             the rejection of the next promise in the chain.
          */
-        Future<NV> onRejected(Exception reason) throws Exception;
+        Future<? extends NV> onRejected(Exception reason) throws Exception;
     }
 
     /**

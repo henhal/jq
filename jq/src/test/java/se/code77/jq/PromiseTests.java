@@ -1091,4 +1091,21 @@ public class PromiseTests extends AsyncTests {
         assertData(then1, 2000, TEST_VALUE1);
         assertResolved(p, TEST_VALUE1);
     }
+
+    @Test
+    public void onFulfilled_returnsWildcardFuture() {
+        final BlockingDataHolder<CharSequence> then1 = new BlockingDataHolder<>();
+        final Promise<CharSequence> p = JQ.resolve().then(new OnFulfilledCallback<Void, CharSequence>() {
+            @Override
+            public Future<? extends CharSequence> onFulfilled(Void value) throws Exception {
+                return Value.wrap(TEST_VALUE2);
+            }
+        });
+
+        p.then(new DataFulfilledCallback<CharSequence, Void>(then1));
+
+        assertData(then1, 2000, TEST_VALUE2);
+        assertResolved(p, TEST_VALUE2);
+
+    }
 }
