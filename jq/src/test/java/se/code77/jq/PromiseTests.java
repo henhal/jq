@@ -81,10 +81,10 @@ public class PromiseTests extends AsyncTests {
             }
         }, new DataRejectedCallback<Void>(fail2));
 
-        deferred.reject(TEST_REASON1);
+        deferred.reject(newReason(TEST_REASON1));
 
-        assertData(fail1, 2000, TEST_REASON1);
-        assertData(fail2, 2000, TEST_REASON1);
+        assertData(fail1, 2000, newReason(TEST_REASON1));
+        assertData(fail2, 2000, newReason(TEST_REASON1));
         assertRejected(p, TEST_REASON1);
     }
 
@@ -101,12 +101,12 @@ public class PromiseTests extends AsyncTests {
 
     @Test
     public void preRejected_isRejected() throws Exception {
-        Promise<Void> p = JQ.reject(TEST_REASON1);
+        Promise<Void> p = JQ.reject(newReason(TEST_REASON1));
 
         BlockingDataHolder<Exception> fail1 = new BlockingDataHolder<>();
         p.fail(new DataRejectedCallback<>(fail1));
 
-        assertData(fail1, 2000, TEST_REASON1);
+        assertData(fail1, 2000, newReason(TEST_REASON1));
         assertRejected(p, TEST_REASON1);
     }
 
@@ -122,7 +122,7 @@ public class PromiseTests extends AsyncTests {
 
     @Test
     public void rejected_isNotResolved() {
-        Promise<Void> p = JQ.reject(TEST_REASON1);
+        Promise<Void> p = JQ.reject(newReason(TEST_REASON1));
 
         BlockingDataHolder<Void> then1 = new BlockingDataHolder<>();
         p.then(new DataFulfilledCallback<Void, Void>(then1));
@@ -140,7 +140,7 @@ public class PromiseTests extends AsyncTests {
         deferred.resolve(TEST_VALUE2);
         assertResolved(p, TEST_VALUE1);
 
-        deferred.reject(TEST_REASON1);
+        deferred.reject(newReason(TEST_REASON1));
         assertResolved(p, TEST_VALUE1);
     }
 
@@ -149,9 +149,9 @@ public class PromiseTests extends AsyncTests {
         final Deferred<String> deferred = JQ.defer();
         Promise<String> p = deferred.promise;
 
-        deferred.reject(TEST_REASON1);
+        deferred.reject(newReason(TEST_REASON1));
 
-        deferred.reject(TEST_REASON2);
+        deferred.reject(newReason(TEST_REASON2));
         assertRejected(p, TEST_REASON1);
 
         deferred.resolve(TEST_VALUE1);
@@ -175,7 +175,7 @@ public class PromiseTests extends AsyncTests {
     public void deferred_isResolvedWithRejectedPromise() throws Exception {
         final Deferred<Integer> deferred = JQ.defer();
         Promise<Integer> p = deferred.promise;
-        Future<Integer> f = JQ.defer(new SlowTask<Integer>(TEST_REASON1, 500));
+        Future<Integer> f = JQ.defer(new SlowTask<Integer>(newReason(TEST_REASON1), 500));
 
         assertPending(p);
         deferred.resolve(f);
@@ -241,7 +241,7 @@ public class PromiseTests extends AsyncTests {
 
     @Test
     public void rejected_isRejectedSync() throws Exception {
-        final Promise<Void> p = JQ.reject(TEST_REASON1);
+        final Promise<Void> p = JQ.reject(newReason(TEST_REASON1));
 
         Exception e = assertThrows(new Callable<Void>() {
             @Override
@@ -250,7 +250,7 @@ public class PromiseTests extends AsyncTests {
             }
         }, ExecutionException.class);
 
-        assertSame(TEST_REASON1, e.getCause());
+        assertEquals(newReason(TEST_REASON1), e.getCause());
     }
 
     @Test
@@ -316,14 +316,14 @@ public class PromiseTests extends AsyncTests {
                     @Override
                     public Future<Integer> onFulfilled(String value) throws Exception {
                         super.onFulfilled(value);
-                        throw TEST_REASON1;
+                        throw newReason(TEST_REASON1);
                     }
                 }).then(
                 new DataFulfilledCallback<>(then2), new DataRejectedCallback<>(fail1));
 
         assertData(then1, 2000, TEST_VALUE1);
         assertNoData(then2, 2000);
-        assertData(fail1, 2000, TEST_REASON1);
+        assertData(fail1, 2000, newReason(TEST_REASON1));
     }
 
     @Test
@@ -355,7 +355,7 @@ public class PromiseTests extends AsyncTests {
                     @Override
                     public Future<Integer> onFulfilled(String value) throws Exception {
                         super.onFulfilled(value);
-                        throw TEST_REASON1;
+                        throw newReason(TEST_REASON1);
                     }
                 }).then(
                 new DataFulfilledCallback<>(then2)).fail(
@@ -363,7 +363,7 @@ public class PromiseTests extends AsyncTests {
 
         assertData(then1, 2000, TEST_VALUE1);
         assertNoData(then2, 2000);
-        assertData(fail1, 2000, TEST_REASON1);
+        assertData(fail1, 2000, newReason(TEST_REASON1));
     }
 
     @Test
@@ -374,7 +374,7 @@ public class PromiseTests extends AsyncTests {
                 new OnFulfilledCallback<String, Void>() {
                     @Override
                     public Future<Void> onFulfilled(String value) throws Exception {
-                        throw TEST_REASON1;
+                        throw newReason(TEST_REASON1);
                     }
                 }).done();
 
@@ -399,9 +399,9 @@ public class PromiseTests extends AsyncTests {
         // new promise is rejected
         BlockingDataHolder<Exception> fail1 = new BlockingDataHolder<>();
 
-        JQ.reject(TEST_REASON1).timeout(1000).fail(new DataRejectedCallback<>(fail1));
+        JQ.reject(newReason(TEST_REASON1)).timeout(1000).fail(new DataRejectedCallback<>(fail1));
 
-        assertData(fail1, 500, TEST_REASON1);
+        assertData(fail1, 500, newReason(TEST_REASON1));
 
     }
 
@@ -425,7 +425,7 @@ public class PromiseTests extends AsyncTests {
     @Test
     public void timeout_isRejectedAfterTimeout() throws InterruptedException {
         // Promise is rejected but too late, TimeoutException is thrown
-        Promise<String> p = JQ.defer(new SlowTask<String>(TEST_REASON1, 2000)).timeout(1000);
+        Promise<String> p = JQ.defer(new SlowTask<String>(newReason(TEST_REASON1), 2000)).timeout(1000);
 
         Thread.sleep(500);
         assertPending(p);
@@ -449,7 +449,7 @@ public class PromiseTests extends AsyncTests {
     @Test
     public void delay_isRejected() throws InterruptedException {
         // new promise is rejected immediately
-        Promise<Void> p = JQ.<Void>reject(TEST_REASON1).delay(1000);
+        Promise<Void> p = JQ.<Void>reject(newReason(TEST_REASON1)).delay(1000);
 
         Thread.sleep(500);
         assertRejected(p, TEST_REASON1);
@@ -528,7 +528,7 @@ public class PromiseTests extends AsyncTests {
     @Test
     public void join_isThisRejected() throws InterruptedException {
         // this rejected, that resolved -> new promise should be rejected
-        Promise<String> p1 = JQ.defer(new SlowTask<String>(TEST_REASON1, 0));
+        Promise<String> p1 = JQ.defer(new SlowTask<String>(newReason(TEST_REASON1), 0));
         Promise<String> p2 = JQ.resolve(TEST_VALUE1);
         Promise<String> p3 = p1.join(p2);
 
@@ -540,7 +540,7 @@ public class PromiseTests extends AsyncTests {
     public void join_isThatRejected() throws InterruptedException {
         // this resolved, that rejected -> new promise should be rejected
         Promise<String> p1 = JQ.resolve(TEST_VALUE1);
-        Promise<String> p2 = JQ.defer(new SlowTask<String>(TEST_REASON1, 0));
+        Promise<String> p2 = JQ.defer(new SlowTask<String>(newReason(TEST_REASON1), 0));
         Promise<String> p3 = p1.join(p2);
 
         Thread.sleep(500);
@@ -682,7 +682,7 @@ public class PromiseTests extends AsyncTests {
         final BlockingDataHolder<Boolean> fin = new BlockingDataHolder<>();
         final BlockingDataHolder<String> then = new BlockingDataHolder<>();
 
-        JQ.<String>reject(TEST_REASON1).fail(new Promise.OnRejectedCallback<String>() {
+        JQ.<String>reject(newReason(TEST_REASON1)).fail(new Promise.OnRejectedCallback<String>() {
             @Override
             public Future<String> onRejected(Exception reason) throws Exception {
                 return Value.wrap(TEST_VALUE2);
@@ -720,11 +720,11 @@ public class PromiseTests extends AsyncTests {
         }).fin(new Promise.OnFinallyCallback() {
             @Override
             public void onFinally() throws Exception {
-                throw TEST_REASON2;
+                throw newReason(TEST_REASON2);
             }
         }).fail(new DataRejectedCallback<String>(fail));
 
-        assertData(fail, 500, TEST_REASON2);
+        assertData(fail, 500, newReason(TEST_REASON2));
     }
 
     @Test
@@ -746,7 +746,7 @@ public class PromiseTests extends AsyncTests {
         // assert(catchCalled);
         final BlockingDataHolder<Exception> fail = new BlockingDataHolder<>();
 
-        JQ.<String>reject(TEST_REASON1).fail(new Promise.OnRejectedCallback<String>() {
+        JQ.<String>reject(newReason(TEST_REASON1)).fail(new Promise.OnRejectedCallback<String>() {
             @Override
             public Future<String> onRejected(Exception reason) throws Exception {
                 return Value.wrap(TEST_VALUE2);
@@ -754,11 +754,11 @@ public class PromiseTests extends AsyncTests {
         }).fin(new Promise.OnFinallyCallback() {
             @Override
             public void onFinally() throws Exception {
-                throw TEST_REASON2;
+                throw newReason(TEST_REASON2);
             }
         }).fail(new DataRejectedCallback<String>(fail));
 
-        assertData(fail, 500, TEST_REASON2);
+        assertData(fail, 500, newReason(TEST_REASON2));
 
     }
 
@@ -801,10 +801,10 @@ public class PromiseTests extends AsyncTests {
         final BlockingDataHolder<Boolean> fin = new BlockingDataHolder<>();
         final BlockingDataHolder<Exception> fail = new BlockingDataHolder<>();
 
-        JQ.<String>reject(TEST_REASON1).fin(new FinallyCalledCallback(fin)).fail(new DataRejectedCallback<String>(fail));
+        JQ.<String>reject(newReason(TEST_REASON1)).fin(new FinallyCalledCallback(fin)).fail(new DataRejectedCallback<String>(fail));
 
         assertData(fin, 500, true);
-        assertData(fail, 500, TEST_REASON1);
+        assertData(fail, 500, newReason(TEST_REASON1));
     }
 
     @Test
@@ -1035,12 +1035,12 @@ public class PromiseTests extends AsyncTests {
 
     @Test
     public void thenReject() {
-        final Promise<String> p = JQ.resolve(1).thenReject(TEST_REASON1, String.class);
+        final Promise<String> p = JQ.resolve(1).thenReject(newReason(TEST_REASON1), String.class);
         final BlockingDataHolder<Exception> fail1 = new BlockingDataHolder<>();
 
         p.fail(new DataRejectedCallback<String>(fail1));
 
-        assertData(fail1, 2000, TEST_REASON1);
+        assertData(fail1, 2000, newReason(TEST_REASON1));
         assertRejected(p, TEST_REASON1);
     }
 
@@ -1062,7 +1062,7 @@ public class PromiseTests extends AsyncTests {
 
     @Test
     public void tap_isRejected() {
-        final Promise<String> p = JQ.reject(TEST_REASON1);
+        final Promise<String> p = JQ.reject(newReason(TEST_REASON1));
         final BlockingDataHolder<String> tap1 = new BlockingDataHolder<>();
 
         p.tap(new Promise.OnTapCallback<String>() {

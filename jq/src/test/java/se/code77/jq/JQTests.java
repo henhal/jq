@@ -34,7 +34,7 @@ public class JQTests extends AsyncTests {
 
     @Test
     public void reject_isRejected() throws InterruptedException {
-        Promise<Void> p = JQ.reject(TEST_REASON1);
+        Promise<Void> p = JQ.reject(newReason(TEST_REASON1));
         TestConfig.waitForIdle();
         assertRejected(p, TEST_REASON1);
     }
@@ -63,7 +63,7 @@ public class JQTests extends AsyncTests {
     @Test
     public void all_isRejected() throws InterruptedException {
         Promise<List<String>> p = JQ.all(
-                JQ.resolve(TEST_VALUE1), JQ.defer(new SlowTask<String>(TEST_REASON1, 1000)));
+                JQ.resolve(TEST_VALUE1), JQ.defer(new SlowTask<String>(newReason(TEST_REASON1), 1000)));
 
         Thread.sleep(500);
         assertPending(p);
@@ -75,7 +75,7 @@ public class JQTests extends AsyncTests {
     public void all_isPending() throws InterruptedException {
         // at least one promise is not done -> resulting is pending forever
         Promise<List<String>> p = JQ.all(
-                JQ.defer(new SlowTask<>(TEST_VALUE1, 1000)), JQ.defer(new SlowTask<String>(TEST_REASON1, 2000)));
+                JQ.defer(new SlowTask<>(TEST_VALUE1, 1000)), JQ.defer(new SlowTask<String>(newReason(TEST_REASON1), 2000)));
 
         Thread.sleep(500);
         assertPending(p);
@@ -97,7 +97,7 @@ public class JQTests extends AsyncTests {
         Promise<String> p = JQ.any(
                 Arrays.asList(
                         JQ.defer(new SlowTask<>(TEST_VALUE1, 200)),
-                        JQ.defer(new SlowTask<String>(TEST_REASON1, 100))));
+                        JQ.defer(new SlowTask<String>(newReason(TEST_REASON1), 100))));
 
         Thread.sleep(500);
         assertResolved(p, TEST_VALUE1);
@@ -118,7 +118,7 @@ public class JQTests extends AsyncTests {
     public void any_isResolvedByLastAfterOtherRejected() throws InterruptedException {
         Promise<String> p = JQ.any(
                 Arrays.asList(
-                        JQ.defer(new SlowTask<String>(TEST_REASON1, 100)),
+                        JQ.defer(new SlowTask<String>(newReason(TEST_REASON1), 100)),
                         JQ.defer(new SlowTask<>(TEST_VALUE1, 200))));
 
         Thread.sleep(500);
@@ -129,8 +129,8 @@ public class JQTests extends AsyncTests {
     public void any_isRejected() throws InterruptedException {
         Promise<String> p = JQ.any(
                 Arrays.asList(
-                        JQ.defer(new SlowTask<String>(TEST_REASON1, 100)),
-                        JQ.defer(new SlowTask<String>(TEST_REASON2, 200))));
+                        JQ.defer(new SlowTask<String>(newReason(TEST_REASON1), 100)),
+                        JQ.defer(new SlowTask<String>(newReason(TEST_REASON2), 200))));
 
         Thread.sleep(500);
         assertRejected(p);
@@ -173,7 +173,7 @@ public class JQTests extends AsyncTests {
     public void race_isRejectedByFirst() throws InterruptedException {
         Promise<String> p = JQ.race(
                 Arrays.asList(
-                        JQ.defer(new SlowTask<String>(TEST_REASON1, 100)),
+                        JQ.defer(new SlowTask<String>(newReason(TEST_REASON1), 100)),
                         JQ.defer(new SlowTask<>(TEST_VALUE1, 1000))));
 
         Thread.sleep(500);
@@ -185,7 +185,7 @@ public class JQTests extends AsyncTests {
         Promise<String> p = JQ.race(
                 Arrays.asList(
                         JQ.defer(new SlowTask<>(TEST_VALUE1, 1000)),
-                        JQ.defer(new SlowTask<String>(TEST_REASON1, 100))));
+                        JQ.defer(new SlowTask<String>(newReason(TEST_REASON1), 100))));
 
         Thread.sleep(500);
         assertRejected(p, TEST_REASON1);
@@ -223,8 +223,8 @@ public class JQTests extends AsyncTests {
         Promise<List<StateSnapshot<String>>> p = JQ.allSettled(
                 Arrays.asList(
                         JQ.defer(new SlowTask<>(TEST_VALUE1, 100)),
-                        JQ.defer(new SlowTask<String>(TEST_REASON1, 200)),
-                        JQ.defer(new SlowTask<String>(TEST_REASON2, 1000))));
+                        JQ.defer(new SlowTask<String>(newReason(TEST_REASON1), 200)),
+                        JQ.defer(new SlowTask<String>(newReason(TEST_REASON2), 1000))));
 
         Thread.sleep(500);
         assertPending(p);
@@ -232,24 +232,24 @@ public class JQTests extends AsyncTests {
         Thread.sleep(1000);
         assertResolved(p, Arrays.asList(
                 new StateSnapshot<>(State.FULFILLED, TEST_VALUE1, null),
-                new StateSnapshot<String>(State.REJECTED, null, TEST_REASON1),
-                new StateSnapshot<String>(State.REJECTED, null, TEST_REASON2)));
+                new StateSnapshot<String>(State.REJECTED, null, newReason(TEST_REASON1)),
+                new StateSnapshot<String>(State.REJECTED, null, newReason(TEST_REASON2))));
     }
 
     @Test
     public void allSettled_isResolvedAllRejected() throws InterruptedException {
         Promise<List<StateSnapshot<String>>> p = JQ.allSettled(
                 Arrays.asList(
-                        JQ.defer(new SlowTask<String>(TEST_REASON1, 100)),
-                        JQ.defer(new SlowTask<String>(TEST_REASON2, 1000))));
+                        JQ.defer(new SlowTask<String>(newReason(TEST_REASON1), 100)),
+                        JQ.defer(new SlowTask<String>(newReason(TEST_REASON2), 1000))));
 
         Thread.sleep(500);
         assertPending(p);
 
         Thread.sleep(1000);
         assertResolved(p, Arrays.asList(
-                new StateSnapshot<String>(State.REJECTED, null, TEST_REASON1),
-                new StateSnapshot<String>(State.REJECTED, null, TEST_REASON2)));
+                new StateSnapshot<String>(State.REJECTED, null, newReason(TEST_REASON1)),
+                new StateSnapshot<String>(State.REJECTED, null, newReason(TEST_REASON2))));
     }
 
     @Test
@@ -304,7 +304,7 @@ public class JQTests extends AsyncTests {
 
     @Test
     public void wrap_isRejectedForFutureTaskFailedWithException() throws InterruptedException {
-        FutureTask<String> future = new FutureTask<>(new SlowTask<String>(TEST_REASON1, 1000));
+        FutureTask<String> future = new FutureTask<>(new SlowTask<String>(newReason(TEST_REASON1), 1000));
         Executors.newSingleThreadExecutor().execute(future);
 
         Promise<String> p = JQ.wrap(future);
