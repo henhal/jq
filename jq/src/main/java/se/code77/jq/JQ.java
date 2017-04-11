@@ -101,7 +101,7 @@ public final class JQ {
          * @param reason Exception to reject the promise with
          */
         public void reject(Exception reason) {
-            ((PromiseImpl<V>) promise)._reject(reason, PromiseImpl.RejectionSource.DEFERRED);
+            ((PromiseImpl<V>) promise)._reject(reason, new PromiseImpl.RejectionInfo(PromiseImpl.RejectionInfo.Source.DEFERRED));
         }
 
         /**

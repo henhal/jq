@@ -19,6 +19,27 @@ import se.code77.jq.config.Config.Dispatcher;
 import se.code77.jq.config.Config.Logger;
 
 class PromiseImpl<V> implements Promise<V> {
+    static class RejectionInfo {
+        public enum Source {
+            DEFERRED,
+            PARENT,
+            HANDLER
+        }
+
+        private final Source source;
+        private final Promise<?> parentPromise;
+        private final Link<?, ?> link;
+
+        public RejectionInfo(Source source, Promise<?> parentPromise, Link<?, ?> link) {
+            this.source = source;
+            this.parentPromise = parentPromise;
+            this.link = link;
+        }
+
+        public RejectionInfo(Source source) {
+            this(source, null, null);
+        }
+    }
     private static final class Link<V, NV> {
         private final OnFulfilledCallback<V, NV> onFulfilledCallback;
         private final OnRejectedCallback<NV> onRejectedCallback;
@@ -54,7 +75,7 @@ class PromiseImpl<V> implements Promise<V> {
     private PromiseImpl(boolean terminate) {
         mState = new StateSnapshot<V>(State.PENDING, null, null);
         mTerminate = terminate;
-        mConstructionStack = isDebug() ? getStackTrace(new Throwable()) : null;
+        mConstructionStack = isDebug() ? getStackTrace(new Exception("Dummy exception"), true) : null;
     }
 
     PromiseImpl() {
@@ -376,13 +397,7 @@ class PromiseImpl<V> implements Promise<V> {
         handleCompletion();
     }
 
-    enum RejectionSource {
-        DEFERRED,
-        PARENT,
-        HANDLER
-    }
-
-    synchronized void _reject(Exception reason, RejectionSource source) {
+    synchronized void _reject(Exception reason, RejectionInfo info) {
         if (!isPending()) {
             warn("Rejecting non-pending promise is a no-op, ignoring");
             return;
@@ -392,22 +407,24 @@ class PromiseImpl<V> implements Promise<V> {
         info("rejected with reason '" + reason + "'");
 
         if (isDebug()) {
-            switch (source) {
+            switch (info.source) {
                 case DEFERRED:
-                    debug("rejection source: deferred was rejected at: " + getStackTrace(reason));
+                    debug("rejection source: deferred was rejected with:\n" + getStackTrace(reason));
                     break;
 
                 case PARENT:
-                    debug("rejection source: parent promise was rejected");
+                    debug("rejection source: parent promise (" + info.parentPromise + ") was rejected");
                     break;
 
                 case HANDLER:
-                    debug("rejection source: exception thrown by handler at: " + getStackTrace(reason));
+                    debug("rejection source: exception thrown by "
+                            + (info.parentPromise.isRejected() ? "rejection" : "fulfillment")
+                            + " handler:\n" + getStackTrace(reason));
                     break;
             }
 
             if (mConstructionStack != null) {
-                debug("rejected promise was created at: " + mConstructionStack);
+                debug("rejected promise was created:\n" + mConstructionStack);
             }
         }
 
@@ -494,7 +511,7 @@ class PromiseImpl<V> implements Promise<V> {
                             verbose("Link.onRejected returned " + nextValue);
                         } else {
                             verbose("Link has no onRejected, forward to next promise");
-                            link.nextPromise._reject(mState.reason, RejectionSource.PARENT);
+                            rejectChild(link, mState.reason, RejectionInfo.Source.PARENT);
                             return;
                         }
                     } else {
@@ -519,7 +536,7 @@ class PromiseImpl<V> implements Promise<V> {
                         }, new OnRejectedCallback() {
                             @Override
                             public Future onRejected(Exception reason) throws Exception {
-                                link.nextPromise._reject(reason, RejectionSource.PARENT);
+                                rejectChild(link, mState.reason, RejectionInfo.Source.PARENT);
                                 return null;
                             }
                         }, new OnProgressedCallback() {
@@ -536,10 +553,16 @@ class PromiseImpl<V> implements Promise<V> {
                     throw e;
                 } catch (Exception reason) {
                     verbose("Link handler threw an exception");
-                    link.nextPromise._reject(reason, RejectionSource.HANDLER);
+                    rejectChild(link, reason, RejectionInfo.Source.HANDLER);
                 }
             }
         });
+    }
+
+    private void rejectChild(Link<V, ?> link, Exception reason, RejectionInfo.Source source) {
+        link.nextPromise._reject(
+                reason,
+                new RejectionInfo(source, this, link));
     }
 
     private boolean isDebug() {
@@ -553,9 +576,35 @@ class PromiseImpl<V> implements Promise<V> {
         }
     }
 
-    private String getStackTrace(Throwable throwable) {
+    private String getStackTrace(Exception e, boolean stripInternal) {
+        String trace = getStackTrace(e);
+
+        if (stripInternal) {
+            String[] lines = trace.split("\\n");
+            int firstLine = 1;
+
+            for (int i = 1; i < lines.length; i++) {
+                if (!lines[i].contains("PromiseImpl.java") && !lines[i].contains("JQ.java")) {
+                    firstLine = i;
+                    break;
+                }
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            for (int i = firstLine; i < lines.length; i++) {
+                sb.append(lines[i]).append("\n");
+            }
+
+            return sb.toString();
+        }
+
+        return trace;
+    }
+
+    private String getStackTrace(Exception e) {
         StringWriter sw = new StringWriter();
-        throwable.printStackTrace(new PrintWriter(sw));
+        e.printStackTrace(new PrintWriter(sw));
 
         return sw.toString();
     }
