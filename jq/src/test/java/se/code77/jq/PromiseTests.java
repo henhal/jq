@@ -164,8 +164,8 @@ public class PromiseTests extends AsyncTests {
         Promise<Integer> p = deferred.promise;
         Future<Integer> f = JQ.defer(new SlowTask<>(42, 500));
 
-        deferred.resolve(f);
         assertPending(p);
+        deferred.resolve(f);
 
         Thread.sleep(1000);
         assertResolved(p, 42);
@@ -177,8 +177,8 @@ public class PromiseTests extends AsyncTests {
         Promise<Integer> p = deferred.promise;
         Future<Integer> f = JQ.defer(new SlowTask<Integer>(TEST_REASON1, 500));
 
-        deferred.resolve(f);
         assertPending(p);
+        deferred.resolve(f);
 
         Thread.sleep(1000);
         assertRejected(p, TEST_REASON1);
@@ -190,8 +190,8 @@ public class PromiseTests extends AsyncTests {
         Promise<Integer> p = deferred.promise;
         Future<Integer> f = Value.wrap(42);
 
-        deferred.resolve(f);
         assertPending(p);
+        deferred.resolve(f);
 
         Thread.sleep(1000);
         assertResolved(p, 42);
@@ -204,8 +204,8 @@ public class PromiseTests extends AsyncTests {
         FutureTask<Integer> f = new FutureTask<>(new SlowTask<>(42, 500));
         Executors.newSingleThreadExecutor().execute(f);
 
-        deferred.resolve(f);
         assertPending(p);
+        deferred.resolve(f);
 
         Thread.sleep(1000);
         assertResolved(p, 42);
