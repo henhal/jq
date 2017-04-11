@@ -1,7 +1,5 @@
 package se.code77.jq.util;
 
-import org.junit.rules.Timeout;
-
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
 
@@ -42,9 +40,15 @@ public class Assert extends org.junit.Assert {
         assertSame(Promise.State.REJECTED, snapshot.state);
         assertNull(snapshot.value);
     }
+
     public static void assertRejected(Promise<?> p, Exception reason) {
         assertRejected(p);
         assertSame(reason, p.inspect().reason);
+    }
+
+    public static void assertRejected(Promise<?> p, String reason) {
+        assertRejected(p);
+        assertSame(reason, p.inspect().reason.getMessage());
     }
 
     public static void assertRejected(Promise<?> p, Class<? extends Exception> reasonClass) {

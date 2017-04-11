@@ -18,7 +18,7 @@ public class TestConfig {
             sTestThread = new TestThread("Async event thread");
             sTestThread.start();
 
-            Config config = new Config(false) {
+            Config config = new Config(false, LogLevel.VERBOSE) {
                 @Override
                 public Dispatcher createDispatcher() {
                     Dispatcher d = super.createDispatcher();
