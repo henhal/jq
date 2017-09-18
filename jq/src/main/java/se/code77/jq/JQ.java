@@ -22,7 +22,7 @@ import se.code77.jq.Promise.StateSnapshot;
  * <br>
  * The JQ class itself contains static helpers and convenience methods related
  * to promises. For example {@link #defer()}, {@link #defer(DeferredHandler)}
- * and {@link #defer(Callable)} used to create new promises that will be
+ * and {@link #work(Callable)} used to create new promises that will be
  * connected to a task and returned to clients, as well as various helper
  * methods related to synchronization of multiple promises etc. It also contains
  * static counterparts to most instance methods on {@link Promise}.
@@ -177,14 +177,14 @@ public final class JQ {
      * @see #defer(DeferredHandler)
      */
     public static <V> Deferred<V> defer() {
-        return new Deferred<V>();
+        return new Deferred<>();
     }
 
     /**
      * Alternative way of creating a deferred object, offering a compact way of
      * inlining the code that handles the task and resolves/rejects the promise,
      * while returning the promise in one single method call. Note that unlike
-     * {@link #defer(Callable, Executor)}, the
+     * {@link #work(Callable, Executor)}, the
      * {@link DeferredHandler} will be invoked on the
      * calling thread and will have to manually spawn any background threads etc
      * as needed.
@@ -214,7 +214,7 @@ public final class JQ {
     }
 
     /**
-     * Alternative way of creating a deferred object by running the given task
+     * Alternative way of deferring work by running the given synchronous task
      * using a default cached thread pool executor, resolving/rejecting the
      * associated promise with the result of the task execution, and returning
      * the promise.
@@ -231,18 +231,28 @@ public final class JQ {
      *            used to resolve the promise, if any exception is thrown it
      *            will be used to reject the promise.
      * @return A new promise for the task
-     * @see #defer(Callable, Executor) 
+     * @see #work(Callable, Executor)
      */
-    public static <V> Promise<V> defer(final Callable<V> task) {
-        return defer(task, DEFAULT_EXECUTOR);
+    public static <V> Promise<V> work(final Callable<V> task) {
+        return work(task, DEFAULT_EXECUTOR);
     }
 
     /**
-     * Alternative way of creating a deferred object by running the given task
+     * Deprecated due to confusing name, use {@link #work(Callable)}
+     *
+     * @deprecated
+     */
+    @Deprecated
+    public static <V> Promise<V> defer(final Callable<V> task) {
+        return work(task);
+    }
+
+    /**
+     * Alternative way of deferring work by running the given synchronous task
      * using the given executor, resolving/rejecting the associated promise with
      * the result of the task execution, and returning the promise.
      *
-     * @see #defer() <pre>
+     * <pre>
      * Promise&lt;String&gt; p = JQ.defer(myExec, new Callable&lt;String&gt;() {
      *     public String call() {
      *         return &quot;Hello world&quot;;
@@ -255,8 +265,9 @@ public final class JQ {
      *            will be used to reject the promise.
      * @param executor Executor to run the task
      * @return A new promise for the task
+     * @see #work(Callable)
      */
-    public static <V> Promise<V> defer(final Callable<V> task, Executor executor) {
+    public static <V> Promise<V> work(final Callable<V> task, Executor executor) {
         final Deferred<V> deferred = defer();
 
         executor.execute(new Runnable() {
@@ -271,6 +282,16 @@ public final class JQ {
         });
 
         return deferred.promise;
+    }
+
+    /**
+     * Deprecated due to confusing name, use {@link #work(Callable)}
+     *
+     * @deprecated
+     */
+    @Deprecated
+    public static <V> Promise<V> defer(final Callable<V> task, Executor executor) {
+        return work(task, executor);
     }
 
     /**
@@ -301,7 +322,7 @@ public final class JQ {
      * @return A new promise
      */
     public static Promise<Void> resolve() {
-        return resolve((Void) null);
+        return resolve(null);
     }
 
     /**
@@ -321,7 +342,7 @@ public final class JQ {
         } else if (future instanceof Value) {
             return resolve(((Value<V>) future).get());
         } else {
-            return defer(new Callable<V>() {
+            return work(new Callable<V>() {
                 @Override
                 public V call() throws Exception {
                     try {
@@ -340,7 +361,6 @@ public final class JQ {
                             throw e;
                         }
                     }
-
                 }
             });
         }
@@ -375,11 +395,12 @@ public final class JQ {
      * @return A new promise that will be resolved with the value
      *         returned/rejected with the reason thrown from any of the callback
      *         handlers.
+     * @deprecated There is no use-case for creating a pre-resolved promise and attaching
+     *             a rejection handler.
      */
-    public static <V, NV>
-            Promise<NV> when(
-                    final V value, OnFulfilledCallback<V, NV> onFulfilled,
-                    OnRejectedCallback<NV> onRejected) {
+    public static <V, NV> Promise<NV> when(final V value,
+                                           OnFulfilledCallback<V, NV> onFulfilled,
+                                           OnRejectedCallback<NV> onRejected) {
         return resolve(value).then(onFulfilled, onRejected);
     }
 
@@ -397,47 +418,61 @@ public final class JQ {
      *         handlers.
      */
     public static <V, NV> Promise<NV> when(final V value,
-            OnFulfilledCallback<V, NV> onFulfilled) {
+                                           OnFulfilledCallback<V, NV> onFulfilled) {
         return when(value, onFulfilled, null);
     }
 
     /**
      * Static convenience version of then. This method is equivalent to
-     * JQ.resolve(value).then(onFulfilled, onRejected).
+     * JQ.resolve().then(onFulfilled).
+     *
+     * @see Promise#then(OnFulfilledCallback)
+     * @param <NV> Type of the value to be returned by the callback handlers
+     * @param onFulfilled Fulfillment handler
+     * @return A new promise that will be resolved with the value
+     *         returned/rejected with the reason thrown from any of the callback
+     *         handlers.
+     */
+    public static <NV> Promise<NV> when(OnFulfilledCallback<Void, NV> onFulfilled) {
+        return when((Void)null, onFulfilled);
+    }
+
+    /**
+     * Static convenience version of then. This method is equivalent to
+     * JQ.wrap(future).then(onFulfilled, onRejected).
      * 
      * @see Promise#then(OnFulfilledCallback, OnRejectedCallback)
      * @param <V> Type of the value to be carried by the promise
      * @param <NV> Type of the value to be returned by the callback handlers
-     * @param value Value to resolve the promise with
+     * @param future Future to wrap in a promise
      * @param onFulfilled Fulfillment handler
      * @param onRejected Rejection handler
      * @return A new promise that will be resolved with the value
      *         returned/rejected with the reason thrown from any of the callback
      *         handlers.
      */
-    public static <V, NV>
-            Promise<NV> when(
-                    final Value<V> value, OnFulfilledCallback<V, NV> onFulfilled,
-                    OnRejectedCallback<NV> onRejected) {
-        return when(value.get(), onFulfilled, onRejected);
+    public static <V, NV> Promise<NV> when(final Future<V> future,
+                                           OnFulfilledCallback<V, NV> onFulfilled,
+                                           OnRejectedCallback<NV> onRejected) {
+        return wrap(future).then(onFulfilled, onRejected);
     }
 
     /**
      * Static convenience version of then. This method is equivalent to
-     * JQ.resolve(value).then(onFulfilled).
+     * JQ.wrap(future).then(onFulfilled).
      * 
      * @see Promise#then(OnFulfilledCallback)
      * @param <V> Type of the value to be carried by the promise
      * @param <NV> Type of the value to be returned by the callback handlers
-     * @param value Value to resolve the promise with
+     * @param future Future to wrap in a promise
      * @param onFulfilled Fulfillment handler
      * @return A new promise that will be resolved with the value
      *         returned/rejected with the reason thrown from any of the callback
      *         handlers.
      */
-    public static <V, NV> Promise<NV> when(final Value<V> value,
-            OnFulfilledCallback<V, NV> onFulfilled) {
-        return when(value, onFulfilled, null);
+    public static <V, NV> Promise<NV> when(final Future<V> future,
+                                           OnFulfilledCallback<V, NV> onFulfilled) {
+        return when(future, onFulfilled, null);
     }
 
     /**
@@ -446,34 +481,34 @@ public final class JQ {
      * 
      * @see Promise#fail(OnRejectedCallback)
      * @param <V> Type of the value to be carried by the promise
-     * @param <NV> Type of the value to be returned by the callback handlers
      * @param value Value to resolve the promise with
      * @param onRejected Rejection handler
      * @return A new promise that will be resolved with the value
      *         returned/rejected with the reason thrown from any of the callback
      *         handlers.
+     * @deprecated There is no use-case for creating a pre-resolved promise and attaching
+     *             a rejection handler.
      */
-    public static <V, NV> Promise<NV> fail(final V value,
-            OnRejectedCallback<NV> onRejected) {
-        return when(value, null, onRejected);
+    public static <V> Promise<V> fail(final V value,
+                                      OnRejectedCallback<V> onRejected) {
+        return resolve(value).fail(onRejected);
     }
 
     /**
      * Static convenience version of fail. This method is equivalent to
-     * JQ.resolve(value).fail(onRejected).
+     * JQ.wrap(future).fail(onRejected).
      * 
      * @see Promise#fail(OnRejectedCallback)
      * @param <V> Type of the value to be carried by the promise
-     * @param <NV> Type of the value to be returned by the callback handlers
-     * @param value Value to resolve the promise with
+     * @param future Future to wrap in a promise
      * @param onRejected Rejection handler
      * @return A new promise that will be resolved with the value
      *         returned/rejected with the reason thrown from any of the callback
      *         handlers.
      */
-    public static <V, NV> Promise<NV> fail(final Value<V> value,
-            OnRejectedCallback<NV> onRejected) {
-        return fail(value.get(), onRejected);
+    public static <V> Promise<V> fail(final Future<V> future,
+                                      OnRejectedCallback<V> onRejected) {
+        return wrap(future).fail(onRejected);
     }
 
     /**
@@ -485,27 +520,29 @@ public final class JQ {
      * @param value Value to resolve the promise with
      * @param onFulfilled Fulfillment handler
      * @param onRejected Rejection handler
+     * @deprecated There is no use-case for creating a pre-resolved promise and attaching
+     *             a rejection handler.
      */
-    public static <V> void done(
-            final V value, OnFulfilledCallback<V, Void> onFulfilled,
-            OnRejectedCallback<Void> onRejected) {
+    public static <V> void done(final V value,
+                                OnFulfilledCallback<V, Void> onFulfilled,
+                                OnRejectedCallback<Void> onRejected) {
         resolve(value).done(onFulfilled, onRejected);
     }
 
     /**
      * Static convenience version of done. This method is equivalent to
-     * JQ.resolve(value).done(onFulfilled, onRejected).
+     * JQ.wrap(future).done(onFulfilled, onRejected).
      * 
      * @see Promise#done(OnFulfilledCallback, OnRejectedCallback)
      * @param <V> Type of the value to be carried by the promise
-     * @param value Value to resolve the promise with
+     * @param future Future to wrap in a promise
      * @param onFulfilled Fulfillment handler
      * @param onRejected Rejection handler
      */
-    public static <V> void done(
-            final Value<V> value, OnFulfilledCallback<V, Void> onFulfilled,
-            OnRejectedCallback<Void> onRejected) {
-        done(value.get(), onFulfilled, onRejected);
+    public static <V> void done(final Future<V> future,
+                                OnFulfilledCallback<V, Void> onFulfilled,
+                                OnRejectedCallback<Void> onRejected) {
+        wrap(future).done(onFulfilled, onRejected);
     }
 
     /**
@@ -518,22 +555,22 @@ public final class JQ {
      * @param onFulfilled Fulfillment handler
      */
     public static <V> void done(final V value,
-            OnFulfilledCallback<V, Void> onFulfilled) {
+                                OnFulfilledCallback<V, Void> onFulfilled) {
         done(value, onFulfilled, null);
     }
 
     /**
      * Static convenience version of done. This method is equivalent to
-     * JQ.resolve(value).done(onFulfilled).
+     * JQ.wrap(future).done(onFulfilled).
      * 
      * @see Promise#done(OnFulfilledCallback)
      * @param <V> Type of the value to be carried by the promise
-     * @param value Value to resolve the promise with
+     * @param future Future to wrap in a promise
      * @param onFulfilled Fulfillment handler
      */
-    public static <V> void done(final Value<V> value,
-            OnFulfilledCallback<V, Void> onFulfilled) {
-        done(value.get(), onFulfilled);
+    public static <V> void done(final Future<V> future,
+                                OnFulfilledCallback<V, Void> onFulfilled) {
+        done(future, onFulfilled, null);
     }
 
     /**
@@ -543,21 +580,22 @@ public final class JQ {
      * @see Promise#done()
      * @param <V> Type of the value to be carried by the promise
      * @param value Value to resolve the promise with
+     * @deprecated There is no use-case for resolving a value and directly terminating it.
      */
     public static <V> void done(final V value) {
-        done(value, null, null);
+        resolve(value).done();
     }
 
     /**
      * Static convenience version of done. This method is equivalent to
-     * JQ.resolve(value).done().
+     * JQ.wrap(future).done().
      * 
      * @see Promise#done()
      * @param <V> Type of the value to be carried by the promise
-     * @param value Value to resolve the promise with
+     * @param future Future to wrap in a promise
      */
-    public static <V> void done(final Value<V> value) {
-        done(value.get());
+    public static <V> void done(final Future<V> future) {
+        wrap(future).done();
     }
 
     /**
