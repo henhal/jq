@@ -213,19 +213,37 @@ class PromiseImpl<V> implements Promise<V> {
 
     @Override
     public Promise<V> fin(final OnFinallyCallback onFinally) {
-        return then(new OnFulfilledCallback<V, V>() {
+        return fin(new OnFinallyFutureCallback() {
             @Override
-            public Future<V> onFulfilled(V value) throws Exception {
+            public Future<Void> onFinally() throws Exception {
                 onFinally.onFinally();
 
-                return Value.wrap(value);
+                return Value.VOID;
+            }
+        });
+    }
+
+    @Override
+    public Promise<V> fin(final OnFinallyFutureCallback onFinally) {
+        return then(new OnFulfilledCallback<V, V>() {
+            @Override
+            public Future<V> onFulfilled(final V value) throws Exception {
+                return JQ.wrap(onFinally.onFinally()).then(new OnFulfilledCallback<Void, V>() {
+                    @Override
+                    public Future<? extends V> onFulfilled(Void v) throws Exception {
+                        return Value.wrap(value);
+                    }
+                });
             }
         }, new OnRejectedCallback<V>() {
             @Override
-            public Future<V> onRejected(Exception reason) throws Exception {
-                onFinally.onFinally();
-
-                throw reason;
+            public Future<V> onRejected(final Exception reason) throws Exception {
+                return JQ.wrap(onFinally.onFinally()).then(new OnFulfilledCallback<Void, V>() {
+                    @Override
+                    public Future<? extends V> onFulfilled(Void v) throws Exception {
+                        throw reason;
+                    }
+                });
             }
         });
     }
